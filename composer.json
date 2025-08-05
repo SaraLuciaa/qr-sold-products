@@ -1,0 +1,17 @@
+{
+    "name": "sara-lucia/qrsoldproducts",
+    "autoload": {
+        "psr-4": {
+            "SaraLucia\\Qrsoldproducts\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Sara Lucia",
+            "email": "saludipu71@gmail.com"
+        }
+    ],
+    "require": {
+        "chillerlan/php-qrcode": "^5.0"
+    }
+}
