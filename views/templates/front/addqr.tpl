@@ -42,37 +42,40 @@
 
     <div class="form-group">
         <label for="user_type_dni">Tipo de Documento *</label>
-        
         <select name="user_type_dni" id="user_type_dni" class="form-control" required>
-          <option value="" disabled {if {$qr_data.user_type_dni|default:''|escape:'html'} == ""}selected {/if}>Selecciona una opción</option>
-          <option value="cedula_ciudadania" {if {$qr_data.user_type_dni|default:''|escape:'html'} == "cedula_ciudadania"}selected {/if}>Cédula de ciudadanía</option>
-          <option value="tarjeta_identidad" {if {$qr_data.user_type_dni|default:''|escape:'html'} == "tarjeta_identidad"}selected {/if}>Tarjeta de identidad</option>
-          <option value="cedula_extranjera" {if {$qr_data.user_type_dni|default:''|escape:'html'} == "cedula_extranjera"}selected {/if}>Cédula de extranjería</option>
+            <option value="" disabled {if {$qr_data.user_type_dni|default:''|escape:'html'} == ""}selected {/if}>Selecciona una opción</option>
+            <option value="CC" {if {$qr_data.user_type_dni|default:''|escape:'html'} == "CC"}selected {/if}>Cédula de ciudadanía</option>
+            <option value="TI" {if {$qr_data.user_type_dni|default:''|escape:'html'} == "TI"}selected {/if}>Tarjeta de identidad</option>
+            <option value="CE" {if {$qr_data.user_type_dni|default:''|escape:'html'} == "CE"}selected {/if}>Cédula de extranjería</option>
         </select>
     </div>
 
     <div class="form-group">
-        <label for="user_dni">Numero de Documento *</label>
-        <input type="text" name="user_dni" id="user_dni" class="form-control"
-               value="{$qr_data.user_dni|default:''|escape:'html'}" required>
+        <label for="user_dni">Número de Documento *</label>
+        <input type="text" name="user_dni" id="user_dni" class="form-control" required
+               value="{$qr_data.user_dni|default:''|escape:'html'}">
     </div>
 
     <div class="form-group">
-        <label for="user_Birthdate">Fecha de Nacimiento</label>
-        <input type="date" name="user_Birthdate" id="user_Birthdate" class="form-control"
-               value="{$qr_data.user_Birthdate|default:''|escape:'html'}">
+        <label for="user_birthdate">Fecha de Nacimiento</label>
+        <input type="date" name="user_birthdate" id="user_birthdate" class="form-control"
+               value="{$qr_data.user_birthdate|default:''|escape:'html'}">
     </div>
     
     <div class="form-group">
-        <label for="user_gender">Genero</label>
-        <input type="text" name="user_gender" id="user_gender" class="form-control"
-               value="{$qr_data.user_gender|default:''|escape:'html'}">
+        <label for="user_gender">Género</label>
+        <select name="user_gender" id="user_gender" class="form-control">
+            <option value="" disabled {if {$qr_data.user_gender|default:''|escape:'html'} == ""}selected {/if}>Selecciona una opción</option>
+            <option value="MASCULINO" {if {$qr_data.user_gender|default:''|escape:'html'} == "MASCULINO"}selected {/if}>Masculino</option>
+            <option value="FEMENINO" {if {$qr_data.user_gender|default:''|escape:'html'} == "FEMENINO"}selected {/if}>Femenino</option>
+            <option value="OTRO" {if {$qr_data.user_gender|default:''|escape:'html'} == "OTRO"}selected {/if}>Otro</option>
+        </select>
     </div>
     
     <div class="form-group">
-        <label for="user_stature">Estatura</label>
-        <input type="text" name="user_stature" id="user_stature" class="form-control"
-               value="{$qr_data.user_stature|default:''|escape:'html'}">
+        <label for="user_stature_cm">Estatura (cm)</label>
+        <input type="number" name="user_stature_cm" id="user_stature_cm" class="form-control"
+               value="{$qr_data.user_stature_cm|default:''|escape:'html'}">
     </div>
     
     <div class="form-group">
@@ -100,153 +103,478 @@
     </div>
     
     <div class="form-group">
-        <label for="user_weight">Peso</label>
-        <input type="text" name="user_weight" id="user_weight" class="form-control"
-               value="{$qr_data.user_weight|default:''|escape:'html'}">
+        <label for="user_whatsapp_e164">WhatsApp (formato E164)</label>
+        <input type="text" name="user_whatsapp_e164" id="user_whatsapp_e164" class="form-control"
+               value="{$qr_data.user_whatsapp_e164|default:''|escape:'html'}" placeholder="+573001234567">
     </div>
     
     <div class="form-group">
-        <label for="user_eps">Tiene EPS</label>
-               
-        <select name="user_eps" id="user_eps" class="form-control">
-          <option value="" disabled {if {$qr_data.user_eps|default:''|escape:'html'} == ""}selected {/if}>Selecciona una opción</option>
-          
-          <option value="Si" {if {$qr_data.user_eps|default:''|escape:'html'} == "SI"}selected {/if}>Si</option>
-          <option value="No" {if {$qr_data.user_eps|default:''|escape:'html'} == "No"}selected {/if}>No</option>
-        </select>
-               
+        <label for="user_weight_kg">Peso (kg)</label>
+        <input type="number" step="0.01" name="user_weight_kg" id="user_weight_kg" class="form-control"
+               value="{$qr_data.user_weight_kg|default:''|escape:'html'}">
     </div>
     
-    {if {$qr_data.user_eps|default:''|escape:'html'} == "Si"}
-    <div id="eps_name" class="form-group">
+    <div class="form-group">
+        <label for="user_has_eps">Tiene EPS</label>
+        <select name="user_has_eps" id="user_has_eps" class="form-control">
+            <option value="0" {if {$qr_data.user_has_eps|default:0} == 0}selected {/if}>No</option>
+            <option value="1" {if {$qr_data.user_has_eps|default:0} == 1}selected {/if}>Sí</option>
+        </select>
+    </div>
+    
+    <div id="eps_name" class="form-group" {if {$qr_data.user_has_eps|default:0} == 0}style="display: none;"{/if}>
         <label for="user_eps_name">Nombre de la EPS</label>
         <input type="text" name="user_eps_name" id="user_eps_name" class="form-control"
                value="{$qr_data.user_eps_name|default:''|escape:'html'}">
     </div>
-    {else}
-       <div id="eps_name" class="form-group" style="display: none;">
-        <label for="user_eps_name">Nombre de la EPS</label>
-        <input type="text" name="user_eps_name" id="user_eps_name" class="form-control"
-               value="{$qr_data.user_eps_name|default:''|escape:'html'}">
-    </div>
-       
-    {/if}
     
     <div class="form-group">
-        <label for="user_prepaid">Tiene Prepagada</label>
-               
-        <select name="user_prepaid" id="user_prepaid" class="form-control">
-          <option value="" disabled {if {$qr_data.user_prepaid|default:''|escape:'html'} == ""}selected {/if}>Selecciona una opción</option>
-          
-          <option value="Si" {if {$qr_data.user_prepaid|default:''|escape:'html'} == "Si"}selected {/if}>Si</option>
-          <option value="No" {if {$qr_data.user_prepaid|default:''|escape:'html'} == "No"}selected {/if}>No</option>
+        <label for="user_has_prepaid">Tiene Prepagada</label>
+        <select name="user_has_prepaid" id="user_has_prepaid" class="form-control">
+            <option value="0" {if {$qr_data.user_has_prepaid|default:0} == 0}selected {/if}>No</option>
+            <option value="1" {if {$qr_data.user_has_prepaid|default:0} == 1}selected {/if}>Sí</option>
         </select>
-               
     </div>
     
-    {if {$qr_data.user_prepaid|default:''|escape:'html'} == "Si"}
-    <div id="prepa_name" class="form-group">
+    <div id="prepa_name" class="form-group" {if {$qr_data.user_has_prepaid|default:0} == 0}style="display: none;"{/if}>
         <label for="user_prepaid_name">Nombre de la Prepagada</label>
         <input type="text" name="user_prepaid_name" id="user_prepaid_name" class="form-control"
                value="{$qr_data.user_prepaid_name|default:''|escape:'html'}">
     </div>
-    {else}
-    <div id="prepa_name" class="form-group" style="display: none;">
-        <label for="user_prepaid_name">Nombre de la Prepagada</label>
-        <input type="text" name="user_prepaid_name" id="user_prepaid_name" class="form-control"
-               value="{$qr_data.user_prepaid_name|default:''|escape:'html'}">
-    </div>
-    {/if}
-    
     
     <div class="form-group">
         <label for="user_blood_type">Tipo de Sangre</label>
-               
         <select name="user_blood_type" id="user_blood_type" class="form-control">
-          <option value="" disabled {if {$qr_data.user_blood_type|default:''|escape:'html'} == ""}selected {/if}>Selecciona una opción</option>
-          
-          <option value="O_positivo" {if {$qr_data.user_blood_type|default:''|escape:'html'} == "O_positivo"}selected {/if}>O Positivo</option>
-          <option value="B_negativo" {if {$qr_data.user_blood_type|default:''|escape:'html'} == "B_negativo"}selected {/if}>B negativo</option>
+            <option value="" disabled {if {$qr_data.user_blood_type|default:''|escape:'html'} == ""}selected {/if}>Selecciona una opción</option>
+            <option value="O+" {if {$qr_data.user_blood_type|default:''|escape:'html'} == "O+"}selected {/if}>O+</option>
+            <option value="O-" {if {$qr_data.user_blood_type|default:''|escape:'html'} == "O-"}selected {/if}>O-</option>
+            <option value="A+" {if {$qr_data.user_blood_type|default:''|escape:'html'} == "A+"}selected {/if}>A+</option>
+            <option value="A-" {if {$qr_data.user_blood_type|default:''|escape:'html'} == "A-"}selected {/if}>A-</option>
+            <option value="B+" {if {$qr_data.user_blood_type|default:''|escape:'html'} == "B+"}selected {/if}>B+</option>
+            <option value="B-" {if {$qr_data.user_blood_type|default:''|escape:'html'} == "B-"}selected {/if}>B-</option>
+            <option value="AB+" {if {$qr_data.user_blood_type|default:''|escape:'html'} == "AB+"}selected {/if}>AB+</option>
+            <option value="AB-" {if {$qr_data.user_blood_type|default:''|escape:'html'} == "AB-"}selected {/if}>AB-</option>
         </select>
-               
     </div>
     
     <div class="form-group">
-        <label for="user_donor">Donador de Organos</label>
-               
-        <select name="user_donor" id="user_donor" class="form-control">
-          <option value="" disabled {if {$qr_data.user_donor|default:''|escape:'html'} == ""}selected {/if}>Selecciona una opción</option>
-          
-          <option value="Si" {if {$qr_data.user_donor|default:''|escape:'html'} == "Si"}selected {/if}>Si</option>
-          <option value="No" {if {$qr_data.user_donor|default:''|escape:'html'} == "No"}selected {/if}>No</option>
+        <label for="user_accepts_transfusions">Acepta Transfusiones</label>
+        <select name="user_accepts_transfusions" id="user_accepts_transfusions" class="form-control">
+            <option value="1" {if {$qr_data.user_accepts_transfusions|default:1} == 1}selected {/if}>Sí</option>
+            <option value="0" {if {$qr_data.user_accepts_transfusions|default:1} == 0}selected {/if}>No</option>
         </select>
-               
     </div>
     
     <div class="form-group">
-        <label for="user_covid">Vacuna contra el COVID</label>
-               
-        <select name="user_covid" id="user_covid" class="form-control">
-          <option value="" disabled {if {$qr_data.user_covid|default:''|escape:'html'} == ""}selected {/if}>Selecciona una opción</option>
-          
-          <option value="Si" {if {$qr_data.user_covid|default:''|escape:'html'} == "SI"}selected {/if}>Si</option>
-          <option value="No" {if {$qr_data.user_covid|default:''|escape:'html'} == "No"}selected {/if}>No</option>
+        <label for="user_organ_donor">Donador de Órganos</label>
+        <select name="user_organ_donor" id="user_organ_donor" class="form-control">
+            <option value="0" {if {$qr_data.user_organ_donor|default:0} == 0}selected {/if}>No</option>
+            <option value="1" {if {$qr_data.user_organ_donor|default:0} == 1}selected {/if}>Sí</option>
         </select>
-               
-    </div>
-    
-    <div class="form-group">
-        <label for="user_diseases">Enfermedades</label>
-        <input type="text" name="user_diseases" id="user_diseases" class="form-control"
-               value="{$qr_data.user_diseases|default:''|escape:'html'}">
-    </div>
-    
-    <div class="form-group">
-        <label for="medical_info">Notas Médicas</label>
-        <input type="text" name="medical_info" id="medical_info" class="form-control"
-               value="{$qr_data.medical_info|default:''|escape:'html'}">
     </div>
     
     <div class="form-group">
         <label for="extra_notes">Observaciones</label>
-        <input type="text" name="extra_notes" id="extra_notes" class="form-control"
-               value="{$qr_data.extra_notes|default:''|escape:'html'}">
+        <textarea name="extra_notes" id="extra_notes" class="form-control" rows="3">{$qr_data.extra_notes|default:''|escape:'html'}</textarea>
     </div>
 
     <hr>
     
-    <h2>Información de la persona de contacto</h2> 
+    <h2>Información de Contacto de Emergencia</h2> 
+    
+    <div id="contacts_container">
+        <!-- Contacto 1 -->
+        <div class="contact-item" data-contact-index="0">
+            <h4>Contacto de Emergencia 1</h4>
+            <div class="form-group">
+                <label for="contact_name_0">Nombre Completo *</label>
+                <input type="text" name="contact_name[]" id="contact_name_0" class="form-control" required
+                       value="{$qr_data.contacts.0.contact_name|default:$customer->firstname|escape:'html'}">
+            </div>
+
+            <div class="form-group">
+                <label for="contact_phone_0">Teléfono</label>
+                <input type="text" name="contact_phone[]" id="contact_phone_0" class="form-control"
+                       value="{$qr_data.contacts.0.contact_phone|default:''|escape:'html'}">
+            </div>
+
+            <div class="form-group">
+                <label for="contact_whatsapp_e164_0">WhatsApp (formato E164)</label>
+                <input type="text" name="contact_whatsapp_e164[]" id="contact_whatsapp_e164_0" class="form-control"
+                       value="{$qr_data.contacts.0.contact_whatsapp_e164|default:''|escape:'html'}" placeholder="+573001234567">
+            </div>
+
+            <div class="form-group">
+                <label for="contact_email_0">Correo electrónico</label>
+                <input type="email" name="contact_email[]" id="contact_email_0" class="form-control"
+                       value="{$qr_data.contacts.0.contact_email|default:$customer->email|escape:'html'}">
+            </div>
+
+            <div class="form-group">
+                <label for="relationship_0">Parentesco</label>
+                <input type="text" name="relationship[]" id="relationship_0" class="form-control" 
+                       value="{$qr_data.contacts.0.relationship|default:''|escape:'html'}">
+            </div>
+        </div>
+
+        <!-- Contacto 2 (opcional) -->
+        {if $qr_data.contacts.1}
+            <div class="contact-item" data-contact-index="1">
+                <h4>Contacto de Emergencia 2</h4>
+                <div class="form-group">
+                    <label for="contact_name_1">Nombre Completo</label>
+                    <input type="text" name="contact_name[]" id="contact_name_1" class="form-control"
+                           value="{$qr_data.contacts.1.contact_name|escape:'html'}">
+                </div>
+
+                <div class="form-group">
+                    <label for="contact_phone_1">Teléfono</label>
+                    <input type="text" name="contact_phone[]" id="contact_phone_1" class="form-control"
+                           value="{$qr_data.contacts.1.contact_phone|escape:'html'}">
+                </div>
+
+                <div class="form-group">
+                    <label for="contact_whatsapp_e164_1">WhatsApp (formato E164)</label>
+                    <input type="text" name="contact_whatsapp_e164[]" id="contact_whatsapp_e164_1" class="form-control"
+                           value="{$qr_data.contacts.1.contact_whatsapp_e164|escape:'html'}" placeholder="+573001234567">
+                </div>
+
+                <div class="form-group">
+                    <label for="contact_email_1">Correo electrónico</label>
+                    <input type="email" name="contact_email[]" id="contact_email_1" class="form-control"
+                           value="{$qr_data.contacts.1.contact_email|escape:'html'}">
+                </div>
+
+                <div class="form-group">
+                    <label for="relationship_1">Parentesco</label>
+                    <input type="text" name="relationship[]" id="relationship_1" class="form-control" 
+                           value="{$qr_data.contacts.1.relationship|escape:'html'}">
+                </div>
+            </div>
+        {/if}
+    </div>
+    
+    <div class="text-center mt-3">
+        <button type="button" id="add_contact" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-plus"></i> Agregar segundo contacto
+        </button>
+        <button type="button" id="remove_contact" class="btn btn-outline-danger btn-sm ml-2" style="display: none;">
+            <i class="fas fa-minus"></i> Remover segundo contacto
+        </button>
+    </div>
+
+    <hr>
+    
+    <h2>Información de Vacunación COVID-19</h2>
     
     <div class="form-group">
-        <label for="owner_name">Nombre Completo *</label>
-        <input type="text" name="owner_name" id="owner_name" class="form-control" required
-               value="{$qr_data.owner_name|default:$customer->firstname|escape:'html'}">
+        <label for="vaccinated">¿Está vacunado contra COVID-19?</label>
+        <select name="vaccinated" id="vaccinated" class="form-control">
+            <option value="0" {if {$qr_data.covid.vaccinated|default:0} == 0}selected {/if}>No</option>
+            <option value="1" {if {$qr_data.covid.vaccinated|default:0} == 1}selected {/if}>Sí</option>
+        </select>
+    </div>
+    
+    <div id="covid_details" class="form-group" {if {$qr_data.covid.vaccinated|default:0} == 0}style="display: none;"{/if}>
+        <div class="form-group">
+            <label for="doses">Número de dosis</label>
+            <input type="number" name="doses" id="doses" class="form-control" min="1" max="5"
+                   value="{$qr_data.covid.doses|default:''|escape:'html'}">
+        </div>
+        
+        <div class="form-group">
+            <label for="last_dose_date">Fecha de última dosis</label>
+            <input type="date" name="last_dose_date" id="last_dose_date" class="form-control"
+                   value="{$qr_data.covid.last_dose_date|default:''|escape:'html'}">
+        </div>
+        
+        <div class="form-group">
+            <label for="covid_notes">Notas sobre vacunación</label>
+            <textarea name="covid_notes" id="covid_notes" class="form-control" rows="2">{$qr_data.covid.notes|default:''|escape:'html'}</textarea>
+        </div>
     </div>
 
-    <div class="form-group">
-        <label for="owner_phone">Teléfono móvil *</label>
-        <input type="text" name="owner_phone" id="owner_phone" class="form-control" required
-               value="{$qr_data.owner_phone|default:''|escape:'html'}">
-    </div>
-
-    <div class="form-group">
-        <label for="owner_email">Correo electrónico</label>
-        <input type="email" name="owner_email" id="owner_email" class="form-control"
-               value="{$qr_data.owner_email|default:$customer->email|escape:'html'}">
-    </div>
-
-    <div class="form-group">
-        <label for="owner_relationship">Parentezco</label>
-        <input name="owner_relationship" id="owner_relationship" class="form-control" value="{$qr_data.owner_relationship|default:''|escape:'html'}">
-    </div>
-
-    <button type="submit" name="submit_qr_code" class="btn btn-primary mt-3">
-        {if $edit_mode}
-            Guardar cambios
+    <hr>
+    
+    <h2>Condiciones Médicas</h2>
+    
+    <div id="conditions_container">
+        {if $qr_data.conditions}
+            {foreach from=$qr_data.conditions item=condition key=index}
+                <div class="condition-item form-row">
+                    <div class="col-md-6">
+                        <label>Condición médica</label>
+                        <input type="text" name="conditions[]" class="form-control" value="{$condition.condition_name|escape:'html'}">
+                    </div>
+                    <div class="col-md-6">
+                        <label>Nota</label>
+                        <input type="text" name="condition_notes[]" class="form-control" value="{$condition.note|escape:'html'}">
+                    </div>
+                </div>
+            {/foreach}
         {else}
-            Registrar QR
+            <div class="condition-item form-row">
+                <div class="col-md-6">
+                    <label>Condición médica</label>
+                    <input type="text" name="conditions[]" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label>Nota</label>
+                    <input type="text" name="condition_notes[]" class="form-control">
+                </div>
+            </div>
+        {/if}
+    </div>
+    
+    <div class="text-center mt-3">
+        <button type="button" id="add_condition" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-plus"></i> Agregar condición
+        </button>
+    </div>
+
+    <hr>
+    
+    <h2>Alergias</h2>
+    
+    <div id="allergies_container">
+        {if $qr_data.allergies}
+            {foreach from=$qr_data.allergies item=allergy key=index}
+                <div class="allergy-item form-row">
+                    <div class="col-md-6">
+                        <label>Alergia</label>
+                        <input type="text" name="allergies[]" class="form-control" value="{$allergy.allergen|escape:'html'}">
+                    </div>
+                    <div class="col-md-6">
+                        <label>Nota</label>
+                        <input type="text" name="allergy_notes[]" class="form-control" value="{$allergy.note|escape:'html'}">
+                    </div>
+                </div>
+            {/foreach}
+        {else}
+            <div class="allergy-item form-row">
+                <div class="col-md-6">
+                    <label>Alergia</label>
+                    <input type="text" name="allergies[]" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label>Nota</label>
+                    <input type="text" name="allergy_notes[]" class="form-control">
+                </div>
+            </div>
+        {/if}
+    </div>
+    
+    <div class="text-center mt-3">
+        <button type="button" id="add_allergy" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-plus"></i> Agregar alergia
+        </button>
+    </div>
+
+    <hr>
+    
+    <h2>Medicamentos</h2>
+    
+    <div id="medications_container">
+        {if $qr_data.medications}
+            {foreach from=$qr_data.medications item=medication key=index}
+                <div class="medication-item form-row">
+                    <div class="col-md-3">
+                        <label>Medicamento</label>
+                        <input type="text" name="medications[]" class="form-control" value="{$medication.med_name|escape:'html'}">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Dosis</label>
+                        <input type="text" name="med_doses[]" class="form-control" value="{$medication.dose|escape:'html'}">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Frecuencia</label>
+                        <input type="text" name="med_frequencies[]" class="form-control" value="{$medication.frequency|escape:'html'}">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Nota</label>
+                        <input type="text" name="med_notes[]" class="form-control" value="{$medication.note|escape:'html'}">
+                    </div>
+                </div>
+            {/foreach}
+        {else}
+            <div class="medication-item form-row">
+                <div class="col-md-3">
+                    <label>Medicamento</label>
+                    <input type="text" name="medications[]" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label>Dosis</label>
+                    <input type="text" name="med_doses[]" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label>Frecuencia</label>
+                    <input type="text" name="med_frequencies[]" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label>Nota</label>
+                    <input type="text" name="med_notes[]" class="form-control">
+                </div>
+            </div>
+        {/if}
+    </div>
+    
+    <div class="text-center mt-3">
+        <button type="button" id="add_medication" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-plus"></i> Agregar medicamento
+        </button>
+    </div>
+</div>
+
+<hr class="my-4">
+
+<!-- Botones principales con mejor separación -->
+<div class="form-actions text-center">
+    <button type="submit" name="submit_qr_code" class="btn btn-primary btn-lg px-5">
+        {if $edit_mode}
+            <i class="fas fa-save"></i> Guardar cambios
+        {else}
+            <i class="fas fa-plus"></i> Registrar QR
         {/if}
     </button>
+    
+    <a href="{$link->getPageLink('module-qrsoldproducts-manageqr-custom')}" class="btn btn-secondary btn-lg px-5 ml-3">
+        <i class="fas fa-arrow-left"></i> Cancelar
+    </a>
+</div>
 </form>
+
+<style>
+.form-actions {
+    background-color: #f8f9fa;
+    padding: 2rem;
+    border-radius: 8px;
+    margin-top: 2rem;
+    border: 1px solid #dee2e6;
+}
+
+.form-actions .btn {
+    margin: 0 0.5rem;
+}
+
+.condition-item, .allergy-item, .medication-item {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+    border: 1px solid #e9ecef;
+}
+
+.contact-item {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e9ecef;
+}
+
+.contact-item h4 {
+    color: #495057;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 0.5rem;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mostrar/ocultar campos de EPS
+    const epsSelect = document.getElementById('user_has_eps');
+    const epsNameDiv = document.getElementById('eps_name');
+    
+    epsSelect.addEventListener('change', function() {
+        epsNameDiv.style.display = this.value == '1' ? 'block' : 'none';
+    });
+    
+    // Mostrar/ocultar campos de Prepagada
+    const prepaidSelect = document.getElementById('user_has_prepaid');
+    const prepaidNameDiv = document.getElementById('prepa_name');
+    
+    prepaidSelect.addEventListener('change', function() {
+        prepaidNameDiv.style.display = this.value == '1' ? 'block' : 'none';
+    });
+    
+    // Mostrar/ocultar campos de COVID
+    const vaccinatedSelect = document.getElementById('vaccinated');
+    const covidDetailsDiv = document.getElementById('covid_details');
+    
+    vaccinatedSelect.addEventListener('change', function() {
+        covidDetailsDiv.style.display = this.value == '1' ? 'block' : 'none';
+    });
+    
+    // Agregar condición médica
+    document.getElementById('add_condition').addEventListener('click', function() {
+        const container = document.getElementById('conditions_container');
+        const newItem = document.createElement('div');
+        newItem.className = 'condition-item form-row mt-2';
+        newItem.innerHTML = `
+            <div class="col-md-6">
+                <label>Condición médica</label>
+                <input type="text" name="conditions[]" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label>Nota</label>
+                <input type="text" name="condition_notes[]" class="form-control">
+            </div>
+        `;
+        container.appendChild(newItem);
+    });
+    
+    // Agregar alergia
+    document.getElementById('add_allergy').addEventListener('click', function() {
+        const container = document.getElementById('allergies_container');
+        const newItem = document.createElement('div');
+        newItem.className = 'allergy-item form-row mt-2';
+        newItem.innerHTML = `
+            <div class="col-md-6">
+                <label>Alergia</label>
+                <input type="text" name="allergies[]" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label>Nota</label>
+                <input type="text" name="allergy_notes[]" class="form-control">
+            </div>
+        `;
+        container.appendChild(newItem);
+    });
+    
+    // Agregar medicamento
+    document.getElementById('add_medication').addEventListener('click', function() {
+        const container = document.getElementById('medications_container');
+        const newItem = document.createElement('div');
+        newItem.className = 'medication-item form-row mt-2';
+        newItem.innerHTML = `
+            <div class="col-md-3">
+                <label>Medicamento</label>
+                <input type="text" name="medications[]" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label>Dosis</label>
+                <input type="text" name="med_doses[]" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label>Frecuencia</label>
+                <input type="text" name="med_frequencies[]" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label>Nota</label>
+                <input type="text" name="med_notes[]" class="form-control">
+            </div>
+        `;
+        container.appendChild(newItem);
+    });
+});
+</script>
 
 {/block}
