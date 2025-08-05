@@ -112,7 +112,9 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
 
             if (!$user_name || !$user_type_dni || !$user_dni || (!$editMode && !$validation_code)) {
                 $error = 'Por favor completa todos los campos obligatorios.';
-            } else {
+            } else if (empty($contact_name[0]) || empty($contact_phone[0])) {
+                    $error = 'El contacto de emergencia debe tener nombre y número de celular.';
+            }else {
                 if ($editMode) {
                     // Actualizar datos principales
                     $updated = Db::getInstance()->update('qsp_customer_codes', [
@@ -241,32 +243,31 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
         $this->setTemplate('module:qrsoldproducts/views/templates/front/addqr.tpl');
     }
 
-    private function insertContact($id_customer_code, $name, $phone, $whatsapp, $email, $relationship)
+    private function insertContact($id_customer_code, $names, $phones, $whatsapps, $emails, $relationships)
     {
-        if ($name) {
+        foreach ($names as $i => $name) {
+            if (empty($name) || empty($phones[$i])) {
+                continue; // Ignorar contactos incompletos
+            }
+
             Db::getInstance()->insert('qsp_customer_contacts', [
                 'id_customer_code' => $id_customer_code,
-                'contact_index' => 0,
+                'contact_index' => $i,
                 'contact_name' => pSQL($name),
-                'contact_phone' => pSQL($phone),
-                'contact_whatsapp_e164' => pSQL($whatsapp),
-                'contact_email' => pSQL($email),
-                'relationship' => pSQL($relationship),
+                'contact_phone' => pSQL($phones[$i] ?? ''),
+                'contact_whatsapp_e164' => pSQL($whatsapps[$i] ?? ''),
+                'contact_email' => pSQL($emails[$i] ?? ''),
+                'relationship' => pSQL($relationships[$i] ?? ''),
             ]);
         }
     }
 
-    private function updateContact($id_customer_code, $name, $phone, $whatsapp, $email, $relationship)
+
+    private function updateContact($id_customer_code, $names, $phones, $whatsapps, $emails, $relationships)
     {
-        if ($name) {
-            Db::getInstance()->update('qsp_customer_contacts', [
-                'contact_name' => pSQL($name),
-                'contact_phone' => pSQL($phone),
-                'contact_whatsapp_e164' => pSQL($whatsapp),
-                'contact_email' => pSQL($email),
-                'relationship' => pSQL($relationship),
-            ], 'id_customer_code = ' . $id_customer_code . ' AND contact_index = 0');
-        }
+        Db::getInstance()->delete('qsp_customer_contacts', 'id_customer_code = ' . (int)$id_customer_code);
+
+        $this->insertContact($id_customer_code, $names, $phones, $whatsapps, $emails, $relationships);
     }
 
     private function insertCovid($id_customer_code, $vaccinated, $doses, $last_dose_date, $notes)

@@ -218,48 +218,39 @@
         </div>
 
         <!-- Contacto 2 (opcional) -->
-        {if $qr_data.contacts.1}
-            <div class="contact-item" data-contact-index="1">
-                <h4>Contacto de Emergencia 2</h4>
-                <div class="form-group">
-                    <label for="contact_name_1">Nombre Completo</label>
-                    <input type="text" name="contact_name[]" id="contact_name_1" class="form-control"
-                           value="{$qr_data.contacts.1.contact_name|escape:'html'}">
-                </div>
-
-                <div class="form-group">
-                    <label for="contact_phone_1">Teléfono</label>
-                    <input type="text" name="contact_phone[]" id="contact_phone_1" class="form-control"
-                           value="{$qr_data.contacts.1.contact_phone|escape:'html'}">
-                </div>
-
-                <div class="form-group">
-                    <label for="contact_whatsapp_e164_1">WhatsApp (formato E164)</label>
-                    <input type="text" name="contact_whatsapp_e164[]" id="contact_whatsapp_e164_1" class="form-control"
-                           value="{$qr_data.contacts.1.contact_whatsapp_e164|escape:'html'}" placeholder="+573001234567">
-                </div>
-
-                <div class="form-group">
-                    <label for="contact_email_1">Correo electrónico</label>
-                    <input type="email" name="contact_email[]" id="contact_email_1" class="form-control"
-                           value="{$qr_data.contacts.1.contact_email|escape:'html'}">
-                </div>
-
-                <div class="form-group">
-                    <label for="relationship_1">Parentesco</label>
-                    <input type="text" name="relationship[]" id="relationship_1" class="form-control" 
-                           value="{$qr_data.contacts.1.relationship|escape:'html'}">
-                </div>
+        <div id="contact_item_1" class="contact-item" data-contact-index="1" {if !$qr_data.contacts.1}style="display: none;"{/if}>
+            <h4>Contacto de Emergencia 2</h4>
+            <div class="form-group">
+                <label for="contact_name_1">Nombre Completo</label>
+                <input type="text" name="contact_name[]" id="contact_name_1" class="form-control"
+                    value="{$qr_data.contacts.1.contact_name|default:''|escape:'html'}">
             </div>
-        {/if}
+            <div class="form-group">
+                <label for="contact_phone_1">Teléfono</label>
+                <input type="text" name="contact_phone[]" id="contact_phone_1" class="form-control"
+                    value="{$qr_data.contacts.1.contact_phone|default:''|escape:'html'}">
+            </div>
+            <div class="form-group">
+                <label for="contact_whatsapp_e164_1">WhatsApp (formato E164)</label>
+                <input type="text" name="contact_whatsapp_e164[]" id="contact_whatsapp_e164_1" class="form-control"
+                    value="{$qr_data.contacts.1.contact_whatsapp_e164|default:''|escape:'html'}" placeholder="+573001234567">
+            </div>
+            <div class="form-group">
+                <label for="contact_email_1">Correo electrónico</label>
+                <input type="email" name="contact_email[]" id="contact_email_1" class="form-control"
+                    value="{$qr_data.contacts.1.contact_email|default:''|escape:'html'}">
+            </div>
+            <div class="form-group">
+                <label for="relationship_1">Parentesco</label>
+                <input type="text" name="relationship[]" id="relationship_1" class="form-control" 
+                    value="{$qr_data.contacts.1.relationship|default:''|escape:'html'}">
+            </div>
+        </div>
     </div>
     
     <div class="text-center mt-3">
-        <button type="button" id="add_contact" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-plus"></i> Agregar segundo contacto
-        </button>
-        <button type="button" id="remove_contact" class="btn btn-outline-danger btn-sm ml-2" style="display: none;">
-            <i class="fas fa-minus"></i> Remover segundo contacto
+        <button type="button" id="add_contact" class="btn btn-secondary btn-sm">
+            Agregar segundo contacto
         </button>
     </div>
 
@@ -301,116 +292,117 @@
     <div id="conditions_container">
         {if $qr_data.conditions}
             {foreach from=$qr_data.conditions item=condition key=index}
-                <div class="condition-item form-row">
-                    <div class="col-md-6">
-                        <label>Condición médica</label>
-                        <input type="text" name="conditions[]" class="form-control" value="{$condition.condition_name|escape:'html'}">
+                <div class="condition-item">
+                    <div>
+                        <label for="condition_{$index}">Condición médica</label>
+                        <input type="text" name="conditions[]" id="condition_{$index}" class="form-control" value="{$condition.condition_name|escape:'html'}">
                     </div>
-                    <div class="col-md-6">
-                        <label>Nota</label>
-                        <input type="text" name="condition_notes[]" class="form-control" value="{$condition.note|escape:'html'}">
+                    <div>
+                        <label for="condition_note_{$index}">Nota</label>
+                        <input type="text" name="condition_notes[]" id="condition_note_{$index}" class="form-control" value="{$condition.note|escape:'html'}">
                     </div>
                 </div>
             {/foreach}
         {else}
-            <div class="condition-item form-row">
-                <div class="col-md-6">
+            <div class="condition-item">
+                <div>
                     <label>Condición médica</label>
                     <input type="text" name="conditions[]" class="form-control">
                 </div>
-                <div class="col-md-6">
+                <div>
                     <label>Nota</label>
                     <input type="text" name="condition_notes[]" class="form-control">
                 </div>
             </div>
         {/if}
     </div>
+
     
     <div class="text-center mt-3">
-        <button type="button" id="add_condition" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-plus"></i> Agregar condición
+        <button type="button" id="add_condition" class="btn btn-secondary btn-sm">
+            Agregar condición
         </button>
     </div>
 
     <hr>
-    
+
     <h2>Alergias</h2>
-    
+
     <div id="allergies_container">
         {if $qr_data.allergies}
             {foreach from=$qr_data.allergies item=allergy key=index}
-                <div class="allergy-item form-row">
-                    <div class="col-md-6">
-                        <label>Alergia</label>
-                        <input type="text" name="allergies[]" class="form-control" value="{$allergy.allergen|escape:'html'}">
+                <div class="allergy-item">
+                    <div>
+                        <label for="allergy_{$index}">Alergia</label>
+                        <input type="text" name="allergies[]" id="allergy_{$index}" class="form-control" value="{$allergy.allergen|escape:'html'}">
                     </div>
-                    <div class="col-md-6">
-                        <label>Nota</label>
-                        <input type="text" name="allergy_notes[]" class="form-control" value="{$allergy.note|escape:'html'}">
+                    <div>
+                        <label for="allergy_note_{$index}">Nota</label>
+                        <input type="text" name="allergy_notes[]" id="allergy_note_{$index}" class="form-control" value="{$allergy.note|escape:'html'}">
                     </div>
                 </div>
             {/foreach}
         {else}
-            <div class="allergy-item form-row">
-                <div class="col-md-6">
+            <div class="allergy-item">
+                <div>
                     <label>Alergia</label>
                     <input type="text" name="allergies[]" class="form-control">
                 </div>
-                <div class="col-md-6">
+                <div>
                     <label>Nota</label>
                     <input type="text" name="allergy_notes[]" class="form-control">
                 </div>
             </div>
         {/if}
     </div>
-    
+
     <div class="text-center mt-3">
-        <button type="button" id="add_allergy" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-plus"></i> Agregar alergia
+        <button type="button" id="add_allergy" class="btn btn-secondary btn-sm">
+            Agregar alergia
         </button>
     </div>
-
+    
     <hr>
     
     <h2>Medicamentos</h2>
-    
+
     <div id="medications_container">
         {if $qr_data.medications}
             {foreach from=$qr_data.medications item=medication key=index}
-                <div class="medication-item form-row">
-                    <div class="col-md-3">
-                        <label>Medicamento</label>
-                        <input type="text" name="medications[]" class="form-control" value="{$medication.med_name|escape:'html'}">
+                <div class="medication-item">
+                    <div>
+                        <label for="med_{$index}">Medicamento</label>
+                        <input type="text" name="medications[]" id="med_{$index}" class="form-control" value="{$medication.med_name|escape:'html'}">
                     </div>
-                    <div class="col-md-3">
-                        <label>Dosis</label>
-                        <input type="text" name="med_doses[]" class="form-control" value="{$medication.dose|escape:'html'}">
+                    <div>
+                        <label for="dose_{$index}">Dosis</label>
+                        <input type="text" name="med_doses[]" id="dose_{$index}" class="form-control" value="{$medication.dose|escape:'html'}">
                     </div>
-                    <div class="col-md-3">
-                        <label>Frecuencia</label>
-                        <input type="text" name="med_frequencies[]" class="form-control" value="{$medication.frequency|escape:'html'}">
+                    <div>
+                        <label for="freq_{$index}">Frecuencia</label>
+                        <input type="text" name="med_frequencies[]" id="freq_{$index}" class="form-control" value="{$medication.frequency|escape:'html'}">
                     </div>
-                    <div class="col-md-3">
-                        <label>Nota</label>
-                        <input type="text" name="med_notes[]" class="form-control" value="{$medication.note|escape:'html'}">
+                    <div>
+                        <label for="note_{$index}">Nota</label>
+                        <input type="text" name="med_notes[]" id="note_{$index}" class="form-control" value="{$medication.note|escape:'html'}">
                     </div>
                 </div>
             {/foreach}
         {else}
-            <div class="medication-item form-row">
-                <div class="col-md-3">
+            <div class="medication-item">
+                <div>
                     <label>Medicamento</label>
                     <input type="text" name="medications[]" class="form-control">
                 </div>
-                <div class="col-md-3">
+                <div>
                     <label>Dosis</label>
                     <input type="text" name="med_doses[]" class="form-control">
                 </div>
-                <div class="col-md-3">
+                <div>
                     <label>Frecuencia</label>
                     <input type="text" name="med_frequencies[]" class="form-control">
                 </div>
-                <div class="col-md-3">
+                <div>
                     <label>Nota</label>
                     <input type="text" name="med_notes[]" class="form-control">
                 </div>
@@ -419,8 +411,8 @@
     </div>
     
     <div class="text-center mt-3">
-        <button type="button" id="add_medication" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-plus"></i> Agregar medicamento
+        <button type="button" id="add_medication" class="btn btn-secondary btn-sm">
+            Agregar medicamento
         </button>
     </div>
 </div>
@@ -431,14 +423,14 @@
 <div class="form-actions text-center">
     <button type="submit" name="submit_qr_code" class="btn btn-primary btn-lg px-5">
         {if $edit_mode}
-            <i class="fas fa-save"></i> Guardar cambios
+            Guardar cambios
         {else}
-            <i class="fas fa-plus"></i> Registrar QR
+            Registrar QR
         {/if}
     </button>
     
     <a href="{$link->getPageLink('module-qrsoldproducts-manageqr-custom')}" class="btn btn-secondary btn-lg px-5 ml-3">
-        <i class="fas fa-arrow-left"></i> Cancelar
+        Cancelar
     </a>
 </div>
 </form>
@@ -456,12 +448,33 @@
     margin: 0 0.5rem;
 }
 
-.condition-item, .allergy-item, .medication-item {
+.condition-item,
+.allergy-item,
+.medication-item {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
     background-color: #f8f9fa;
     padding: 1rem;
-    border-radius: 5px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
     margin-bottom: 1rem;
-    border: 1px solid #e9ecef;
+}
+
+.condition-item > div,
+.allergy-item > div {
+    flex: 1 1 48%;
+}
+
+.medication-item > div {
+    flex: 1 1 23%;
+}
+
+.condition-item label,
+.allergy-item label,
+.medication-item label {
+    font-weight: 500;
+    color: #343a40;
 }
 
 .contact-item {
@@ -480,11 +493,6 @@
     padding-bottom: 0.5rem;
 }
 
-.btn-outline-secondary:hover {
-    background-color: #6c757d;
-    border-color: #6c757d;
-    color: white;
-}
 </style>
 
 <script>
@@ -512,6 +520,19 @@ document.addEventListener('DOMContentLoaded', function() {
     vaccinatedSelect.addEventListener('change', function() {
         covidDetailsDiv.style.display = this.value == '1' ? 'block' : 'none';
     });
+
+    // Agregar contacto de emergencia 2
+    // Mostrar el segundo contacto si no está visible
+    const addContactBtn = document.getElementById('add_contact');
+    const contact2 = document.getElementById('contact_item_1');
+
+    addContactBtn.addEventListener('click', function () {
+        if (contact2 && contact2.style.display === 'none') {
+            contact2.style.display = 'block';
+            addContactBtn.style.display = 'none';
+        }
+    });
+
     
     // Agregar condición médica
     document.getElementById('add_condition').addEventListener('click', function() {
