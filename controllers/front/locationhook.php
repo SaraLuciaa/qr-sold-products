@@ -8,7 +8,7 @@ class QrsoldproductsLocationhookModuleFrontController extends ModuleFrontControl
 
         try {
             $input = json_decode(Tools::file_get_contents('php://input'), true);
-            file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "INPUT:\n" . print_r($input, true), FILE_APPEND);
+            file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "LOCATION REQUEST - INPUT:\n" . print_r($input, true), FILE_APPEND);
 
             if (!$input || !isset($input['lat']) || !isset($input['lon']) || !isset($input['qr_code'])) {
                 http_response_code(400);
@@ -54,8 +54,11 @@ class QrsoldproductsLocationhookModuleFrontController extends ModuleFrontControl
             }
 
             if ($enviados > 0) {
-                echo json_encode(['status' => 'Ubicación enviada a ' . $enviados . ' contacto(s) de emergencia']);
+                $message = 'Ubicación enviada a ' . $enviados . ' contacto(s) de emergencia';
+                file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "SUCCESS: $message para QR: $qr_code, Usuario: $user_name\n", FILE_APPEND);
+                echo json_encode(['status' => $message]);
             } else {
+                file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "ERROR: No se pudo enviar ubicación para QR: $qr_code\n", FILE_APPEND);
                 http_response_code(404);
                 echo json_encode(['error' => 'No se pudo enviar ubicación a ningún contacto de emergencia']);
             }

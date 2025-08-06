@@ -52,6 +52,20 @@ class QrsoldproductsActivateModuleFrontController extends ModuleFrontController
             }
 
             $id = (int)$petInfo['id_customer_code'];
+            
+            // Verificar si realmente es el dueño cuando se marca como own=1
+            if ($ownView && $this->context->customer->isLogged()) {
+                $loggedCustomerId = (int)$this->context->customer->id;
+                $qrCustomerId = (int)$petInfo['id_customer'];
+                
+                // Si el usuario logueado no coincide con el dueño del QR, no es realmente el dueño
+                if ($loggedCustomerId !== $qrCustomerId) {
+                    $ownView = false;
+                }
+            } elseif ($ownView && !$this->context->customer->isLogged()) {
+                // Si no está logueado pero se marca como own=1, no es el dueño
+                $ownView = false;
+            }
 
             // Cargar datos adicionales con información de países
             $petInfo['contacts'] = Db::getInstance()->executeS("

@@ -16,6 +16,13 @@
 }
 </style>
 
+{if $own}
+<div class="alert alert-info">
+    <i class="fa fa-info-circle" aria-hidden="true"></i>
+    <strong>Vista del propietario:</strong> Como eres el dueño de este QR, no se enviará notificación automática a tus contactos de emergencia.
+</div>
+{/if}
+
 {include file='module:qrsoldproducts/views/templates/front/locationhook.tpl'}
 
 {if isset($error_message)}
