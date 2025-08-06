@@ -65,6 +65,7 @@ class QrSoldProducts extends Module
             `id_customer_code` INT UNSIGNED NOT NULL AUTO_INCREMENT,
             `id_qr_code` INT UNSIGNED NOT NULL,
             `id_customer` INT UNSIGNED DEFAULT NULL,
+            `user_image` VARCHAR(255) DEFAULT NULL,
             `user_name` VARCHAR(128) NOT NULL,
             `user_type_dni` ENUM("CC","TI","CE") NOT NULL,
             `user_dni` VARCHAR(64) NOT NULL,

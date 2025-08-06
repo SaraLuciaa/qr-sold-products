@@ -172,6 +172,12 @@ class QspCustomerCode extends ObjectModel
                 'validate' => 'isDateFormat',
                 'required' => true,
             ],
+            'user_image' => [
+                'type' => self::TYPE_STRING,
+                'validate' => 'isGenericName',
+                'size' => 255,
+                'allow_null' => true,
+            ],
         ],
     ];
 } 

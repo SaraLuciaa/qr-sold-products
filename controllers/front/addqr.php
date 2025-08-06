@@ -42,6 +42,28 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
         $this->context->smarty->assign('countries', $countries);
     }
 
+    private function handleImageUpload($id_customer_code)
+    {
+        if (!isset($_FILES['user_image']) || $_FILES['user_image']['error'] !== UPLOAD_ERR_OK) {
+            return null;
+        }
+
+        $upload_dir = _PS_MODULE_DIR_ . 'qrsoldproducts/uploads/';
+        if (!file_exists($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+
+        $ext = pathinfo($_FILES['user_image']['name'], PATHINFO_EXTENSION);
+        $filename = 'user_' . $id_customer_code . '.' . $ext;
+        $destination = $upload_dir . $filename;
+
+        if (move_uploaded_file($_FILES['user_image']['tmp_name'], $destination)) {
+            return $filename;
+        }
+
+        return null;
+    }
+
     private function loadFormData()
     {
         $editMode = false;
@@ -234,6 +256,12 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
             return;
         }
 
+        $image_name = $this->handleImageUpload($customer->id);
+        if ($image_name) {
+            $customer->user_image = $image_name;
+            $customer->update();
+        }
+
         // 4) Guardar tablas hijas
         $this->saveContacts($customer->id);
         $this->saveCovidInfo($customer->id);
@@ -255,6 +283,12 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
     {
         $editId = (int)Tools::getValue('edit_id');
         $customer = new QspCustomerCode($editId);
+
+        $image_name = $this->handleImageUpload($customer->id);
+        if ($image_name) {
+            $customer->user_image = $image_name;
+            $customer->update();
+        }
 
         $this->fillCustomerData($customer, null, null, false);
         $customer->update();

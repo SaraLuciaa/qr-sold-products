@@ -17,7 +17,7 @@
     <div class="alert alert-success">{$success|escape:'html'}</div>
 {/if}
 
-<form method="post" class="form-horizontal">
+<form method="post" class="form-horizontal" enctype="multipart/form-data">
     {if !$edit_mode}
         <div class="form-group">
             <label for="validation_code">Código de Validación *</label>
@@ -33,6 +33,11 @@
     <hr>
 
     <h2>Información Personal</h2>
+
+    <div class="form-group">
+        <label for="user_image">Foto (opcional):</label>
+        <input type="file" name="user_image" id="user_image" accept="image/*" class="form-control">
+    </div>
     
     <div class="form-group">
         <label for="user_name">Nombre Completo *</label>
