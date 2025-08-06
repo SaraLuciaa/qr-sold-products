@@ -154,7 +154,7 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
         return $exists ? $id : null;
     }
 
-    private function fillCustomerData($customer, $id_qr_code = null, $customerId = null)
+    private function fillCustomerData($customer, $id_qr_code = null, $customerId = null, $isNewRecord = false)
     {
         if ($id_qr_code !== null) {
             $customer->id_qr_code = (int)$id_qr_code;
@@ -192,7 +192,11 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
         $customer->user_organ_donor = (int)Tools::getValue('user_organ_donor', 0);
     
         $customer->extra_notes = trim(Tools::getValue('extra_notes')) ?: null;
-        $customer->date_activated = date('Y-m-d H:i:s');
+        
+        // Solo establecer date_activated si es un nuevo registro
+        if ($isNewRecord) {
+            $customer->date_activated = date('Y-m-d H:i:s');
+        }
     }
     
     private function insertCustomerData()
@@ -222,7 +226,7 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
 
         // 3) Crear el registro principal
         $customer = new QspCustomerCode();
-        $this->fillCustomerData($customer, $id_qr_code, $customerId);
+        $this->fillCustomerData($customer, $id_qr_code, $customerId, true);
 
         if (!$customer->add()) {
             // Muestra el primer error de validación que lance ObjectModel
@@ -252,7 +256,7 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
         $editId = (int)Tools::getValue('edit_id');
         $customer = new QspCustomerCode($editId);
 
-        $this->fillCustomerData($customer);
+        $this->fillCustomerData($customer, null, null, false);
         $customer->update();
 
         $this->saveContacts($editId);

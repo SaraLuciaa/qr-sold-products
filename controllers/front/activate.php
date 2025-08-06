@@ -127,7 +127,6 @@ class QrsoldproductsActivateModuleFrontController extends ModuleFrontController
 
         } catch (Exception $e) {
             $errorMessage = $e->getMessage();
-            file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "ERROR ACTIVATE: " . $errorMessage . "\n", FILE_APPEND);
         }
 
         $this->context->smarty->assign([

@@ -8,7 +8,6 @@ class QrsoldproductsLocationhookModuleFrontController extends ModuleFrontControl
 
         try {
             $input = json_decode(Tools::file_get_contents('php://input'), true);
-            file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "LOCATION REQUEST - INPUT:\n" . print_r($input, true), FILE_APPEND);
 
             if (!$input || !isset($input['lat']) || !isset($input['lon']) || !isset($input['qr_code'])) {
                 http_response_code(400);
@@ -28,22 +27,9 @@ class QrsoldproductsLocationhookModuleFrontController extends ModuleFrontControl
                 WHERE q.code = '$qr_code' AND q.status = 'ACTIVO'
             "));
 
-            // Log para debug
-            file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "QR_CODE: $qr_code, USER_NAME: " . ($user_name ?: 'NO ENCONTRADO') . "\n", FILE_APPEND);
-
-            // Debug: Verificar qué datos existen en la base de datos
-            $debug_qr = Db::getInstance()->executeS("
-                SELECT q.id_qr_code, q.code, q.status, cc.user_name, cc.id_customer_code
-                FROM " . _DB_PREFIX_ . "qsp_qr_codes q
-                LEFT JOIN " . _DB_PREFIX_ . "qsp_customer_codes cc ON cc.id_qr_code = q.id_qr_code
-                WHERE q.code = '$qr_code'
-            ");
-            file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "DEBUG QR DATA:\n" . print_r($debug_qr, true) . "\n", FILE_APPEND);
-
             // Si no se encuentra el user_name, usar un valor por defecto
             if (!$user_name) {
                 $user_name = "USUARIO";
-                file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "ADVERTENCIA: No se encontró user_name para QR: $qr_code, usando valor por defecto\n", FILE_APPEND);
             }
 
             // Buscar los contactos de emergencia asociados al código QR con información de país
@@ -75,8 +61,6 @@ class QrsoldproductsLocationhookModuleFrontController extends ModuleFrontControl
                     $full_phone = $country_prefix ? $country_prefix . $phone : $phone;
                     $contact_name = $contact['contact_name'];
                     
-                    file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "Intentando enviar a: {$contact_name} ({$full_phone})\n", FILE_APPEND);
-                    
                     if ($this->sendMessageViaApiChat($user_name, $full_phone, $lat, $lon)) {
                         $exitosos++;
                     }
@@ -86,17 +70,14 @@ class QrsoldproductsLocationhookModuleFrontController extends ModuleFrontControl
 
             if ($enviados > 0) {
                 $message = 'Ubicación enviada a ' . $enviados . ' contacto(s) de emergencia';
-                file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "SUCCESS: $message para QR: $qr_code, Usuario: $user_name\n", FILE_APPEND);
                 echo json_encode(['status' => $message]);
             } else {
-                file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "ERROR: No se pudo enviar ubicación para QR: $qr_code\n", FILE_APPEND);
                 http_response_code(404);
                 echo json_encode(['error' => 'No se pudo enviar ubicación a ningún contacto de emergencia']);
             }
             exit;
 
         } catch (Throwable $e) {
-            file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "ERROR:\n" . $e->getMessage(), FILE_APPEND);
             http_response_code(500);
             echo json_encode(['error' => 'Error interno: ' . $e->getMessage()]);
             exit;
@@ -130,9 +111,6 @@ class QrsoldproductsLocationhookModuleFrontController extends ModuleFrontControl
             "Content-Type: application/json"
         ];
         
-        // Log de la petición
-        file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "ENVIANDO WHATSAPP:\n" . json_encode($data) . "\n", FILE_APPEND);
-        
         // Realizar la petición POST
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -146,25 +124,14 @@ class QrsoldproductsLocationhookModuleFrontController extends ModuleFrontControl
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
         
-        // Log de la respuesta
-        file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "RESPUESTA WHATSAPP (HTTP {$http_code}):\n" . $response . "\n", FILE_APPEND);
-        
-        if ($error) {
-            file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "ERROR CURL:\n" . $error . "\n", FILE_APPEND);
-        }
-        
         curl_close($ch);
         
         // Verificar si el envío fue exitoso
         $response_data = json_decode($response, true);
         if ($http_code === 200 && isset($response_data['success']) && $response_data['success']) {
-            file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "Mensaje enviado exitosamente a: {$phone}\n", FILE_APPEND);
             return true;
         } else {
-            file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "Error al enviar mensaje a: {$phone}\n", FILE_APPEND);
             return false;
         }
     }
-    
-
 }
