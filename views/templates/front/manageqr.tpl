@@ -13,10 +13,10 @@
         <thead>
             <tr>
                 <th>Código QR</th>
-                <th>Nombre Mascota</th>
-                <th>Tipo</th>
-                <th>Raza</th>
-                <th>Color</th>
+                <th>Nombre</th>
+                <th>Documento</th>
+                <th>Fecha de Nacimiento</th>
+                <th>Sexo</th>
                 <th>Fecha Activación</th>
                 <th>Acciones</th>
             </tr>
@@ -25,10 +25,10 @@
             {foreach from=$qrs item=qr}
                 <tr class="qr-row" onclick="location.href='{$link->getModuleLink('qrsoldproducts', 'activate', ['code' => $qr.code, 'own' => 1])|escape:'html'}'">
                     <td>{$qr.code}</td>
-                    <td>{$qr.pet_name}</td>
-                    <td>{$qr.pet_type}</td>
-                    <td>{$qr.pet_breed}</td>
-                    <td>{$qr.pet_color}</td>
+                    <td>{$qr.user_name}</td>
+                    <td>{$qr.user_type_dni} {$qr.user_dni}</</td>
+                    <td>{$qr.user_birthdate}</td>
+                    <td>{$qr.user_gender}</td>
                     <td>{$qr.date_activated}</td>
                     <td>
                         <a href="{$link->getModuleLink('qrsoldproducts', 'activate', ['code' => $qr.code, 'own' => 1])|escape:'html'}"
