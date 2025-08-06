@@ -41,6 +41,7 @@ class QrsoldproductsLocationhookModuleFrontController extends ModuleFrontControl
             }
 
             $enviados = 0;
+            $exitosos = 0;
             foreach ($contacts as $contact) {
                 $phone = $contact['contact_phone_number'];
                 $country_prefix = $contact['call_prefix'];
@@ -48,7 +49,13 @@ class QrsoldproductsLocationhookModuleFrontController extends ModuleFrontControl
                 if ($phone) {
                     // Construir el número completo con código de país
                     $full_phone = $country_prefix ? $country_prefix . $phone : $phone;
-                    $this->sendLocationViaApiChat($user_name, $full_phone, $lat, $lon);
+                    $contact_name = $contact['contact_name'];
+                    
+                    file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "Intentando enviar a: {$contact_name} ({$full_phone})\n", FILE_APPEND);
+                    
+                    if ($this->sendMessageViaApiChat($user_name, $full_phone, $lat, $lon)) {
+                        $exitosos++;
+                    }
                     $enviados++;
                 }
             }
@@ -72,49 +79,68 @@ class QrsoldproductsLocationhookModuleFrontController extends ModuleFrontControl
         }
     }
 
-    private function sendLocationViaApiChat($user_name, $phone, $lat, $lon)
+    private function sendMessageViaApiChat($user_name, $phone, $lat, $lon)
     {
-        $url = "https://api.apichat.io/v1/sendLocation";
-
-        // Limpiar el número de teléfono y asegurar que tenga el formato correcto
-        $clean_phone = preg_replace('/\D/', '', $phone);
+        $url = "https://api.apichat.io/v1/sendText";
         
-        // Si el número ya tiene código de país, usarlo tal como está, si no, agregar el de Colombia (57)
-        if (strlen($clean_phone) < 10) {
-            $clean_phone = "57" . $clean_phone;
-        } elseif (strlen($clean_phone) == 10) {
-            $clean_phone = "57" . $clean_phone;
-        }
-
+        // Configuración de la API (deberías mover esto a configuración del módulo)
+        $client_id = "25027";
+        $token = "smtcDBTb05Jk";
+        
+        // Crear el enlace de Google Maps
+        $maps_link = "https://www.google.com/maps?q={$lat},{$lon}";
+        
+        // Mensaje de emergencia
+        $message_text = "Hola, te escribimos de EMERGENCIA ID para informarte que el código QR de Emergencia de {$user_name} fue escaneado desde la ubicación de: {$maps_link} Nota: Si no puedes visualizar la ubicación agrega nuestro número a tus contactos.";
+        
+        // Datos para la API (simplificado como en tu ejemplo de Python)
         $data = [
-            "number" => $clean_phone,
-            "chat_type" => "normal",
-            "address" => "Hola, te escribimos de EMERGENCIA ID para informarte que el código QR de Emergencia de " . $user_name . " ha sido escaneado.",
-            "latitude" => $lat,
-            "longitude" => $lon
+            "number" => $phone,
+            "text" => $message_text
         ];
-
+        
+        // Headers como en tu ejemplo de Python
         $headers = [
-            "client-id: 25027", // <-- cambia por tu client-id real
-            "token: smtcDBTb05Jk", // <-- cambia por tu token real
+            "client-id: " . $client_id,
+            "token: " . $token,
             "Content-Type: application/json"
         ];
-
-        file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "ENVIANDO:\n" . json_encode($data) . "\n", FILE_APPEND);
-
+        
+        // Log de la petición
+        file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "ENVIANDO WHATSAPP:\n" . json_encode($data) . "\n", FILE_APPEND);
+        
+        // Realizar la petición POST
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        
         $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
-
-        file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "RESPUESTA:\n" . $response . "\n", FILE_APPEND);
+        
+        // Log de la respuesta
+        file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "RESPUESTA WHATSAPP (HTTP {$http_code}):\n" . $response . "\n", FILE_APPEND);
+        
         if ($error) {
-            file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "CURL ERROR:\n" . $error . "\n", FILE_APPEND);
+            file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "ERROR CURL:\n" . $error . "\n", FILE_APPEND);
         }
-
+        
         curl_close($ch);
+        
+        // Verificar si el envío fue exitoso
+        $response_data = json_decode($response, true);
+        if ($http_code === 200 && isset($response_data['success']) && $response_data['success']) {
+            file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "Mensaje enviado exitosamente a: {$phone}\n", FILE_APPEND);
+            return true;
+        } else {
+            file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "Error al enviar mensaje a: {$phone}\n", FILE_APPEND);
+            return false;
+        }
     }
+    
+
 }

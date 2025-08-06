@@ -1,10 +1,3 @@
-{if !$own}
-<div id="location-notification" class="alert alert-info" style="display: none;">
-    <i class="fa fa-map-marker" aria-hidden="true"></i>
-    <strong>Ubicación enviada:</strong> Se ha notificado a los contactos de emergencia sobre el escaneo de este QR.
-</div>
-{/if}
-
 {literal}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
