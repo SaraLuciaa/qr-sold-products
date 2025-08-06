@@ -30,7 +30,6 @@
             <li class="list-group-item"><strong>Teléfono celular:</strong> {$pet.user_phone_mobile}</li>
             <li class="list-group-item"><strong>Teléfono residencial:</strong> {$pet.user_phone_home}</li>
             <li class="list-group-item"><strong>Teléfono del trabajo:</strong> {$pet.user_phone_work}</li>
-            <li class="list-group-item"><strong>WhatsApp:</strong> {$pet.user_whatsapp_e164}</li>
             <li class="list-group-item"><strong>Peso:</strong> {$pet.user_weight_kg} kg</li>
             <li class="list-group-item"><strong>EPS:</strong> {if $pet.user_has_eps == 1}{$pet.user_eps_name}{else}No tiene{/if}</li>
             <li class="list-group-item"><strong>Prepagada:</strong> {if $pet.user_has_prepaid == 1}{$pet.user_prepaid_name}{else}No tiene{/if}</li>
@@ -49,7 +48,6 @@
                     <li class="list-group-item">
                         <strong>Nombre:</strong> {$contact.contact_name}<br>
                         <strong>Teléfono:</strong> {$contact.contact_phone}<br>
-                        <strong>WhatsApp:</strong> {$contact.contact_whatsapp_e164}<br>
                         <strong>Email:</strong> {$contact.contact_email}<br>
                         <strong>Parentesco:</strong> {$contact.relationship}
                     </li>
@@ -123,19 +121,11 @@
             </a>
         {else}
             <p>Enviar un mensaje y compartir tu ubicación con la persona de contacto vía WhatsApp:</p>
-            {if $pet.contacts.0.contact_whatsapp_e164}
-                <a href="https://wa.me/{$pet.contacts.0.contact_whatsapp_e164}?text={urlencode('Hola, he encontrado a esta persona.')}"
-                   target="_blank"
-                   class="btn btn-success btn-lg">
-                    Enviar mensaje
-                </a>
-            {elseif $pet.contacts.0.contact_phone}
-                <a href="https://wa.me/57{$pet.contacts.0.contact_phone}?text={urlencode('Hola, he encontrado a esta persona.')}"
-                   target="_blank"
-                   class="btn btn-success btn-lg">
-                    Enviar mensaje
-                </a>
-            {/if}
+            <a href="https://wa.me/{$pet.contacts.0.contact_phone}?text={urlencode('Hola, he encontrado a esta persona.')}"
+                target="_blank"
+                class="btn btn-success btn-lg">
+                Enviar mensaje
+            </a>
         {/if}
     </div>
 {else}

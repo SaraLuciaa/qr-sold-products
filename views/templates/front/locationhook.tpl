@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    qr_code: '{/literal}{$code}{literal}', // ✅ corregido
+                    qr_code: '{/literal}{$code}{literal}', 
                     lat: position.coords.latitude,
                     lon: position.coords.longitude
                 })

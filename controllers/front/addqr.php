@@ -72,7 +72,6 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
             $user_phone_mobile = Tools::getValue('user_phone_mobile');
             $user_phone_home = Tools::getValue('user_phone_home');
             $user_phone_work = Tools::getValue('user_phone_work');
-            $user_whatsapp_e164 = Tools::getValue('user_whatsapp_e164');
             $user_weight_kg = Tools::getValue('user_weight_kg');
             $user_has_eps = Tools::getValue('user_has_eps') ? 1 : 0;
             $user_eps_name = Tools::getValue('user_eps_name');
@@ -86,7 +85,6 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
             // Datos de contacto
             $contact_name = Tools::getValue('contact_name');
             $contact_phone = Tools::getValue('contact_phone');
-            $contact_whatsapp_e164 = Tools::getValue('contact_whatsapp_e164');
             $contact_email = Tools::getValue('contact_email');
             $relationship = Tools::getValue('relationship');
 
@@ -128,7 +126,6 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
                         'user_phone_mobile' => pSQL($user_phone_mobile),
                         'user_phone_home' => pSQL($user_phone_home),
                         'user_phone_work' => pSQL($user_phone_work),
-                        'user_whatsapp_e164' => pSQL($user_whatsapp_e164),
                         'user_weight_kg' => (float)$user_weight_kg,
                         'user_has_eps' => $user_has_eps,
                         'user_eps_name' => pSQL($user_eps_name),
@@ -142,7 +139,7 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
 
                     if ($updated) {
                         // Actualizar contacto
-                        $this->updateContact($editId, $contact_name, $contact_phone, $contact_whatsapp_e164, $contact_email, $relationship);
+                        $this->updateContact($editId, $contact_name, $contact_phone, $contact_email, $relationship);
                         
                         // Actualizar COVID
                         $this->updateCovid($editId, $vaccinated, $doses, $last_dose_date, $covid_notes);
@@ -187,7 +184,6 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
                             'user_phone_mobile' => pSQL($user_phone_mobile),
                             'user_phone_home' => pSQL($user_phone_home),
                             'user_phone_work' => pSQL($user_phone_work),
-                            'user_whatsapp_e164' => pSQL($user_whatsapp_e164),
                             'user_weight_kg' => (float)$user_weight_kg,
                             'user_has_eps' => $user_has_eps,
                             'user_eps_name' => pSQL($user_eps_name),
@@ -204,7 +200,7 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
                             $id_customer_code = Db::getInstance()->Insert_ID();
                             
                             // Insertar contacto
-                            $this->insertContact($id_customer_code, $contact_name, $contact_phone, $contact_whatsapp_e164, $contact_email, $relationship);
+                            $this->insertContact($id_customer_code, $contact_name, $contact_phone, $contact_email, $relationship);
                             
                             // Insertar COVID
                             $this->insertCovid($id_customer_code, $vaccinated, $doses, $last_dose_date, $covid_notes);
@@ -243,7 +239,7 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
         $this->setTemplate('module:qrsoldproducts/views/templates/front/addqr.tpl');
     }
 
-    private function insertContact($id_customer_code, $names, $phones, $whatsapps, $emails, $relationships)
+    private function insertContact($id_customer_code, $names, $phones, $emails, $relationships)
     {
         foreach ($names as $i => $name) {
             if (empty($name) || empty($phones[$i])) {
@@ -255,7 +251,6 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
                 'contact_index' => $i,
                 'contact_name' => pSQL($name),
                 'contact_phone' => pSQL($phones[$i] ?? ''),
-                'contact_whatsapp_e164' => pSQL($whatsapps[$i] ?? ''),
                 'contact_email' => pSQL($emails[$i] ?? ''),
                 'relationship' => pSQL($relationships[$i] ?? ''),
             ]);
@@ -263,11 +258,11 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
     }
 
 
-    private function updateContact($id_customer_code, $names, $phones, $whatsapps, $emails, $relationships)
+    private function updateContact($id_customer_code, $names, $phones, $emails, $relationships)
     {
         Db::getInstance()->delete('qsp_customer_contacts', 'id_customer_code = ' . (int)$id_customer_code);
 
-        $this->insertContact($id_customer_code, $names, $phones, $whatsapps, $emails, $relationships);
+        $this->insertContact($id_customer_code, $names, $phones, $emails, $relationships);
     }
 
     private function insertCovid($id_customer_code, $vaccinated, $doses, $last_dose_date, $notes)

@@ -103,12 +103,6 @@
     </div>
     
     <div class="form-group">
-        <label for="user_whatsapp_e164">WhatsApp (formato E164)</label>
-        <input type="text" name="user_whatsapp_e164" id="user_whatsapp_e164" class="form-control"
-               value="{$qr_data.user_whatsapp_e164|default:''|escape:'html'}" placeholder="+573001234567">
-    </div>
-    
-    <div class="form-group">
         <label for="user_weight_kg">Peso (kg)</label>
         <input type="number" step="0.01" name="user_weight_kg" id="user_weight_kg" class="form-control"
                value="{$qr_data.user_weight_kg|default:''|escape:'html'}">
@@ -199,12 +193,6 @@
             </div>
 
             <div class="form-group">
-                <label for="contact_whatsapp_e164_0">WhatsApp (formato E164)</label>
-                <input type="text" name="contact_whatsapp_e164[]" id="contact_whatsapp_e164_0" class="form-control"
-                       value="{$qr_data.contacts.0.contact_whatsapp_e164|default:''|escape:'html'}" placeholder="+573001234567">
-            </div>
-
-            <div class="form-group">
                 <label for="contact_email_0">Correo electrónico</label>
                 <input type="email" name="contact_email[]" id="contact_email_0" class="form-control"
                        value="{$qr_data.contacts.0.contact_email|default:$customer->email|escape:'html'}">
@@ -229,11 +217,6 @@
                 <label for="contact_phone_1">Teléfono</label>
                 <input type="text" name="contact_phone[]" id="contact_phone_1" class="form-control"
                     value="{$qr_data.contacts.1.contact_phone|default:''|escape:'html'}">
-            </div>
-            <div class="form-group">
-                <label for="contact_whatsapp_e164_1">WhatsApp (formato E164)</label>
-                <input type="text" name="contact_whatsapp_e164[]" id="contact_whatsapp_e164_1" class="form-control"
-                    value="{$qr_data.contacts.1.contact_whatsapp_e164|default:''|escape:'html'}" placeholder="+573001234567">
             </div>
             <div class="form-group">
                 <label for="contact_email_1">Correo electrónico</label>

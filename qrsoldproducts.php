@@ -509,6 +509,15 @@ class QrSoldProducts extends Module
                     'module' => $this->name,
                 ],
             ],
+            'module-qrsoldproducts-locationhook-custom' => [
+                'controller' => 'locationhook',
+                'rule' => 'locationhook',
+                'keywords' => [],
+                'params' => [
+                    'fc' => 'module',
+                    'module' => $this->name,
+                ],
+            ],
         ];
     }
 
