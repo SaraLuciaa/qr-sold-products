@@ -1,22 +1,53 @@
 <?php
 
+require_once _PS_MODULE_DIR_ . 'qrsoldproducts/classes/QspCustomerCode.php';
+
 class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
 {
     public $auth = true;
-    public $authRedirection = 'index';
-    public $ssl = true;
 
     public function initContent()
     {
         parent::initContent();
 
-        $error = '';
-        $success = '';
+        $this->loadCountries();
+        $this->loadFormData();
+        $this->assignSmartyVariables();
+        $this->setTemplate('module:qrsoldproducts/views/templates/front/addqr.tpl');
+    }
+
+    public function postProcess()
+    {
+        if (Tools::isSubmit('submit_add_qr')) {
+            if ($this->validateForm()) {
+                if ($this->isEditMode()) {
+                    $this->updateCustomerData();
+                } else {
+                    $this->insertCustomerData();
+                }
+            }
+        }
+    }
+
+    private function loadCountries()
+    {
+        $id_lang = (int)$this->context->language->id;
+        $countries = Db::getInstance()->executeS('
+            SELECT c.id_country, cl.name, c.call_prefix
+            FROM ' . _DB_PREFIX_ . 'country c
+            INNER JOIN ' . _DB_PREFIX_ . 'country_lang cl ON cl.id_country = c.id_country
+            WHERE cl.id_lang = ' . $id_lang . '
+            ORDER BY cl.name ASC
+        ');
+        $this->context->smarty->assign('countries', $countries);
+    }
+
+    private function loadFormData()
+    {
         $editMode = false;
         $qrData = [];
         $customerId = (int)$this->context->customer->id;
 
-        // Modo edición
         if (Tools::getIsset('edit_id')) {
             $editId = (int)Tools::getValue('edit_id');
             $editMode = true;
@@ -60,297 +91,280 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
             );
         }
 
-        if (Tools::isSubmit('submit_qr_code')) {
-            $validation_code = Tools::getValue('validation_code');
-            $user_name = Tools::getValue('user_name');
-            $user_type_dni = Tools::getValue('user_type_dni');
-            $user_dni = Tools::getValue('user_dni');
-            $user_birthdate = Tools::getValue('user_birthdate');
-            $user_gender = Tools::getValue('user_gender');
-            $user_stature_cm = Tools::getValue('user_stature_cm');
-            $user_address = Tools::getValue('user_address');
-            $user_phone_mobile = Tools::getValue('user_phone_mobile');
-            $user_phone_home = Tools::getValue('user_phone_home');
-            $user_phone_work = Tools::getValue('user_phone_work');
-            $user_weight_kg = Tools::getValue('user_weight_kg');
-            $user_has_eps = Tools::getValue('user_has_eps') ? 1 : 0;
-            $user_eps_name = Tools::getValue('user_eps_name');
-            $user_has_prepaid = Tools::getValue('user_has_prepaid') ? 1 : 0;
-            $user_prepaid_name = Tools::getValue('user_prepaid_name');
-            $user_blood_type = Tools::getValue('user_blood_type');
-            $user_accepts_transfusions = Tools::getValue('user_accepts_transfusions') ? 1 : 0;
-            $user_organ_donor = Tools::getValue('user_organ_donor') ? 1 : 0;
-            $extra_notes = Tools::getValue('extra_notes');
-
-            // Datos de contacto
-            $contact_name = Tools::getValue('contact_name');
-            $contact_phone = Tools::getValue('contact_phone');
-            $contact_email = Tools::getValue('contact_email');
-            $relationship = Tools::getValue('relationship');
-
-            // Datos de COVID
-            $vaccinated = Tools::getValue('vaccinated') ? 1 : 0;
-            $doses = Tools::getValue('doses');
-            $last_dose_date = Tools::getValue('last_dose_date');
-            $covid_notes = Tools::getValue('covid_notes');
-
-            // Condiciones médicas
-            $conditions = Tools::getValue('conditions', []);
-            $condition_notes = Tools::getValue('condition_notes', []);
-
-            // Alergias
-            $allergies = Tools::getValue('allergies', []);
-            $allergy_notes = Tools::getValue('allergy_notes', []);
-
-            // Medicamentos
-            $medications = Tools::getValue('medications', []);
-            $med_doses = Tools::getValue('med_doses', []);
-            $med_frequencies = Tools::getValue('med_frequencies', []);
-            $med_notes = Tools::getValue('med_notes', []);
-
-            if (!$user_name || !$user_type_dni || !$user_dni || (!$editMode && !$validation_code)) {
-                $error = 'Por favor completa todos los campos obligatorios.';
-            } else if (empty($contact_name[0]) || empty($contact_phone[0])) {
-                    $error = 'El contacto de emergencia debe tener nombre y número de celular.';
-            }else {
-                if ($editMode) {
-                    // Actualizar datos principales
-                    $updated = Db::getInstance()->update('qsp_customer_codes', [
-                        'user_name' => pSQL($user_name),
-                        'user_type_dni' => pSQL($user_type_dni),
-                        'user_dni' => pSQL($user_dni),
-                        'user_birthdate' => pSQL($user_birthdate),
-                        'user_gender' => pSQL($user_gender),
-                        'user_stature_cm' => (int)$user_stature_cm,
-                        'user_address' => pSQL($user_address),
-                        'user_phone_mobile' => pSQL($user_phone_mobile),
-                        'user_phone_home' => pSQL($user_phone_home),
-                        'user_phone_work' => pSQL($user_phone_work),
-                        'user_weight_kg' => (float)$user_weight_kg,
-                        'user_has_eps' => $user_has_eps,
-                        'user_eps_name' => pSQL($user_eps_name),
-                        'user_has_prepaid' => $user_has_prepaid,
-                        'user_prepaid_name' => pSQL($user_prepaid_name),
-                        'user_blood_type' => pSQL($user_blood_type),
-                        'user_accepts_transfusions' => $user_accepts_transfusions,
-                        'user_organ_donor' => $user_organ_donor,
-                        'extra_notes' => pSQL($extra_notes),
-                    ], 'id_customer_code = ' . (int)$editId . ' AND id_customer = ' . $customerId);
-
-                    if ($updated) {
-                        // Actualizar contacto
-                        $this->updateContact($editId, $contact_name, $contact_phone, $contact_email, $relationship);
-                        
-                        // Actualizar COVID
-                        $this->updateCovid($editId, $vaccinated, $doses, $last_dose_date, $covid_notes);
-                        
-                        // Actualizar condiciones
-                        $this->updateConditions($editId, $conditions, $condition_notes);
-                        
-                        // Actualizar alergias
-                        $this->updateAllergies($editId, $allergies, $allergy_notes);
-                        
-                        // Actualizar medicamentos
-                        $this->updateMedications($editId, $medications, $med_doses, $med_frequencies, $med_notes);
-
-                        Tools::redirect($this->context->link->getPageLink('module-qrsoldproducts-manageqr-custom'));
-                    } else {
-                        $error = 'Error al guardar los cambios.';
-                    }
-                } else {
-                    // Validar QR
-                    $qr = Db::getInstance()->getRow('
-                        SELECT id_qr_code, status FROM ' . _DB_PREFIX_ . 'qsp_qr_codes
-                        WHERE validation_code = "' . pSQL($validation_code) . '"
-                    ');
-
-                    if (!$qr) {
-                        $error = 'El código QR no es válido o el código de validación no coincide.';
-                    } elseif ($qr['status'] === 'ACTIVO') {
-                        $error = 'Este código QR ya fue activado.';
-                    } else {
-                        $id_qr_code = (int)$qr['id_qr_code'];
-
-                        $inserted = Db::getInstance()->insert('qsp_customer_codes', [
-                            'id_qr_code' => $id_qr_code,
-                            'id_customer' => $customerId,
-                            'user_name' => pSQL($user_name),
-                            'user_type_dni' => pSQL($user_type_dni),
-                            'user_dni' => pSQL($user_dni),
-                            'user_birthdate' => pSQL($user_birthdate),
-                            'user_gender' => pSQL($user_gender),
-                            'user_stature_cm' => (int)$user_stature_cm,
-                            'user_address' => pSQL($user_address),
-                            'user_phone_mobile' => pSQL($user_phone_mobile),
-                            'user_phone_home' => pSQL($user_phone_home),
-                            'user_phone_work' => pSQL($user_phone_work),
-                            'user_weight_kg' => (float)$user_weight_kg,
-                            'user_has_eps' => $user_has_eps,
-                            'user_eps_name' => pSQL($user_eps_name),
-                            'user_has_prepaid' => $user_has_prepaid,
-                            'user_prepaid_name' => pSQL($user_prepaid_name),
-                            'user_blood_type' => pSQL($user_blood_type),
-                            'user_accepts_transfusions' => $user_accepts_transfusions,
-                            'user_organ_donor' => $user_organ_donor,
-                            'extra_notes' => pSQL($extra_notes),
-                            'date_activated' => date('Y-m-d H:i:s'),
-                        ]);
-
-                        if ($inserted) {
-                            $id_customer_code = Db::getInstance()->Insert_ID();
-                            
-                            // Insertar contacto
-                            $this->insertContact($id_customer_code, $contact_name, $contact_phone, $contact_email, $relationship);
-                            
-                            // Insertar COVID
-                            $this->insertCovid($id_customer_code, $vaccinated, $doses, $last_dose_date, $covid_notes);
-                            
-                            // Insertar condiciones
-                            $this->insertConditions($id_customer_code, $conditions, $condition_notes);
-                            
-                            // Insertar alergias
-                            $this->insertAllergies($id_customer_code, $allergies, $allergy_notes);
-                            
-                            // Insertar medicamentos
-                            $this->insertMedications($id_customer_code, $medications, $med_doses, $med_frequencies, $med_notes);
-
-                            Db::getInstance()->update('qsp_qr_codes', [
-                                'status' => 'ACTIVO',
-                                'date_assigned' => date('Y-m-d H:i:s'),
-                            ], 'id_qr_code = ' . $id_qr_code);
-
-                            Tools::redirect($this->context->link->getPageLink('module-qrsoldproducts-manageqr-custom'));
-                        } else {
-                            $error = 'Error al guardar los datos.';
-                        }
-                    }
-                }
-            }
-        }
-
         $this->context->smarty->assign([
-            'error' => $error,
-            'success' => $success,
-            'customer' => $this->context->customer,
             'edit_mode' => $editMode,
             'qr_data' => $qrData,
         ]);
-
-        $this->setTemplate('module:qrsoldproducts/views/templates/front/addqr.tpl');
     }
 
-    private function insertContact($id_customer_code, $names, $phones, $emails, $relationships)
+    private function assignSmartyVariables()
     {
-        foreach ($names as $i => $name) {
-            if (empty($name) || empty($phones[$i])) {
-                continue; // Ignorar contactos incompletos
+        $this->context->smarty->assign([
+            'error' => '',
+            'success' => '',
+            'customer' => $this->context->customer,
+        ]);
+    }
+
+    private function validateForm()
+    {
+        $requiredFields = [
+            'user_name', 'user_type_dni', 'user_dni',
+            'user_mobile_country_id', 'user_mobile_number',
+        ];
+
+        if (!$this->isEditMode()) {
+            $requiredFields[] = 'validation_code';
+        }
+
+        foreach ($requiredFields as $field) {
+            if (trim((string)Tools::getValue($field)) === '') {
+                $this->context->smarty->assign('error', 'Por favor completa todos los campos obligatorios.');
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function isEditMode()
+    {
+        return Tools::getIsset('edit_id') && (int)Tools::getValue('edit_id') > 0;
+    }
+
+    private function normalizeCountryId($fieldName)
+    {
+        $raw = Tools::getValue($fieldName);
+        
+        // Si está vacío o es null, retornar null
+        if (empty($raw) || trim($raw) === '' || $raw === '0') {
+            return null;
+        }
+        
+        $id = (int)$raw;
+
+        if ($id <= 0) {
+            return null; // evita insertar 0
+        }
+
+        // Verifica que exista el id_country
+        $sql = 'SELECT id_country FROM '._DB_PREFIX_.'country WHERE id_country = '.(int)$id;
+        $exists = (bool) Db::getInstance()->getValue($sql);
+
+        return $exists ? $id : null;
+    }
+
+    private function fillCustomerData($customer, $id_qr_code = null, $customerId = null)
+    {
+        if ($id_qr_code !== null) {
+            $customer->id_qr_code = (int)$id_qr_code;
+        }
+        if ($customerId !== null) {
+            $customer->id_customer = (int)$customerId;
+        }
+    
+        $customer->user_name = Tools::getValue('user_name');
+        $customer->user_type_dni = Tools::getValue('user_type_dni');
+        $customer->user_dni = Tools::getValue('user_dni');
+        $customer->user_birthdate = trim(Tools::getValue('user_birthdate')) ?: null;
+        $customer->user_gender = trim(Tools::getValue('user_gender')) ?: null;
+    
+        $customer->user_stature_cm = Tools::getValue('user_stature_cm') ? (int)Tools::getValue('user_stature_cm') : null;
+        $customer->user_address = trim(Tools::getValue('user_address')) ?: null;
+        $customer->user_weight_kg = Tools::getValue('user_weight_kg') ? (float)Tools::getValue('user_weight_kg') : null;
+    
+        $customer->user_mobile_number = Tools::getValue('user_mobile_number');
+        $customer->user_home_number = trim(Tools::getValue('user_home_number')) ?: null;
+        $customer->user_work_number = trim(Tools::getValue('user_work_number')) ?: null;
+
+        $customer->user_mobile_country_id = $this->normalizeCountryId('user_mobile_country_id');     // este es requerido por tu validateForm()
+        $customer->user_home_country_id = $this->normalizeCountryId('user_home_country_id'); // opcional
+        $customer->user_work_country_id = $this->normalizeCountryId('user_work_country_id'); // opcional
+
+        $customer->user_has_eps = (int)Tools::getValue('user_has_eps', 0);
+        $customer->user_eps_name = trim(Tools::getValue('user_eps_name')) ?: null;
+    
+        $customer->user_has_prepaid = (int)Tools::getValue('user_has_prepaid', 0);
+        $customer->user_prepaid_name = trim(Tools::getValue('user_prepaid_name')) ?: null;
+    
+        $customer->user_blood_type = trim(Tools::getValue('user_blood_type')) ?: null;
+        $customer->user_accepts_transfusions = (int)Tools::getValue('user_accepts_transfusions', 1);
+        $customer->user_organ_donor = (int)Tools::getValue('user_organ_donor', 0);
+    
+        $customer->extra_notes = trim(Tools::getValue('extra_notes')) ?: null;
+        $customer->date_activated = date('Y-m-d H:i:s');
+    }
+    
+    private function insertCustomerData()
+    {
+        $customerId = (int)$this->context->customer->id;
+
+        // 1) Obtener el validation_code del POST
+        $validationCode = Tools::getValue('validation_code');
+        if (!$validationCode) {
+            $this->context->smarty->assign('error', 'Falta el código de validación.');
+            return;
+        }
+
+        // 2) Buscar el QR por código de validación (ajusta status según tu lógica)
+        $qr = Db::getInstance()->getRow('
+            SELECT id_qr_code, status
+            FROM '._DB_PREFIX_.'qsp_qr_codes
+            WHERE validation_code = "'.pSQL($validationCode).'" AND status = "SIN_ACTIVAR"
+        ');
+
+        if (!$qr) {
+            $this->context->smarty->assign('error', 'El código de validación no es válido.');
+            return;
+        }
+
+        $id_qr_code = (int)$qr['id_qr_code'];
+
+        // 3) Crear el registro principal
+        $customer = new QspCustomerCode();
+        $this->fillCustomerData($customer, $id_qr_code, $customerId);
+
+        if (!$customer->add()) {
+            // Muestra el primer error de validación que lance ObjectModel
+            $this->context->smarty->assign('error', $this->l('No se pudo registrar el QR. Verifica los campos obligatorios.'));
+            return;
+        }
+
+        // 4) Guardar tablas hijas
+        $this->saveContacts($customer->id);
+        $this->saveCovidInfo($customer->id);
+        $this->saveConditions($customer->id);
+        $this->saveAllergies($customer->id);
+        $this->saveMedications($customer->id);
+
+        // 5) Actualizar estado del QR a ACTIVO y asignar fecha
+        Db::getInstance()->update('qsp_qr_codes', [
+            'status' => pSQL('ACTIVO'),
+            'date_assigned' => date('Y-m-d H:i:s'),
+        ], 'id_qr_code = '.$id_qr_code);
+
+        Tools::redirect($this->context->link->getPageLink('module-qrsoldproducts-manageqr-custom'));
+    }
+
+
+    private function updateCustomerData()
+    {
+        $editId = (int)Tools::getValue('edit_id');
+        $customer = new QspCustomerCode($editId);
+
+        $this->fillCustomerData($customer);
+        $customer->update();
+
+        $this->saveContacts($editId);
+        $this->saveCovidInfo($editId);
+        $this->saveConditions($editId);
+        $this->saveAllergies($editId);
+        $this->saveMedications($editId);
+
+        Tools::redirect($this->context->link->getPageLink('module-qrsoldproducts-manageqr-custom'));
+    }
+
+    private function saveContacts($id_customer_code)
+    {
+        Db::getInstance()->delete('qsp_customer_contacts', 'id_customer_code = ' . (int)$id_customer_code);
+
+        $names = Tools::getValue('contact_name', []);
+        $phones = Tools::getValue('contact_phone', []);
+        $emails = Tools::getValue('contact_email', []);
+        $relations = Tools::getValue('contact_relationship', []);
+        $country_ids = Tools::getValue('contact_country_id', []);
+
+        foreach ($names as $index => $name) {
+            if (empty($name)) {
+                continue;
             }
 
             Db::getInstance()->insert('qsp_customer_contacts', [
-                'id_customer_code' => $id_customer_code,
-                'contact_index' => $i,
+                'id_customer_code' => (int)$id_customer_code,
+                'contact_index' => (int)$index,
                 'contact_name' => pSQL($name),
-                'contact_phone' => pSQL($phones[$i] ?? ''),
-                'contact_email' => pSQL($emails[$i] ?? ''),
-                'relationship' => pSQL($relationships[$i] ?? ''),
+                'contact_phone_number' => pSQL($phones[$index]),
+                'contact_email' => pSQL($emails[$index]),
+                'relationship' => pSQL($relations[$index]),
+                'contact_country_id' => (int)($country_ids[$index] ?? 0),
             ]);
         }
     }
 
-
-    private function updateContact($id_customer_code, $names, $phones, $emails, $relationships)
+    private function saveCovidInfo($id_customer_code)
     {
-        Db::getInstance()->delete('qsp_customer_contacts', 'id_customer_code = ' . (int)$id_customer_code);
+        Db::getInstance()->delete('qsp_customer_covid_vaccine', 'id_customer_code = ' . (int)$id_customer_code);
 
-        $this->insertContact($id_customer_code, $names, $phones, $emails, $relationships);
-    }
-
-    private function insertCovid($id_customer_code, $vaccinated, $doses, $last_dose_date, $notes)
-    {
         Db::getInstance()->insert('qsp_customer_covid_vaccine', [
-            'id_customer_code' => $id_customer_code,
-            'vaccinated' => $vaccinated,
-            'doses' => (int)$doses,
-            'last_dose_date' => pSQL($last_dose_date),
-            'notes' => pSQL($notes),
+            'id_customer_code' => (int)$id_customer_code,
+            'vaccinated' => (int)Tools::getValue('vaccinated', 0),
+            'doses' => (int)Tools::getValue('doses'),
+            'last_dose_date' => pSQL(Tools::getValue('last_dose_date')),
+            'notes' => pSQL(Tools::getValue('covid_notes')),
         ]);
     }
 
-    private function updateCovid($id_customer_code, $vaccinated, $doses, $last_dose_date, $notes)
+    private function saveConditions($id_customer_code)
     {
-        Db::getInstance()->update('qsp_customer_covid_vaccine', [
-            'vaccinated' => $vaccinated,
-            'doses' => (int)$doses,
-            'last_dose_date' => pSQL($last_dose_date),
-            'notes' => pSQL($notes),
-        ], 'id_customer_code = ' . $id_customer_code);
-    }
+        Db::getInstance()->delete('qsp_customer_conditions', 'id_customer_code = ' . (int)$id_customer_code);
 
-    private function insertConditions($id_customer_code, $conditions, $notes)
-    {
+        $conditions = Tools::getValue('condition_name', []);
+        $notes = Tools::getValue('condition_note', []);
+
         foreach ($conditions as $index => $condition) {
-            if ($condition) {
-                Db::getInstance()->insert('qsp_customer_conditions', [
-                    'id_customer_code' => $id_customer_code,
-                    'condition_name' => pSQL($condition),
-                    'note' => pSQL($notes[$index] ?? ''),
-                ]);
+            if (empty($condition)) {
+                continue;
             }
+
+            Db::getInstance()->insert('qsp_customer_conditions', [
+                'id_customer_code' => (int)$id_customer_code,
+                'condition_name' => pSQL($condition),
+                'note' => pSQL($notes[$index]),
+            ]);
         }
     }
 
-    private function updateConditions($id_customer_code, $conditions, $notes)
+    private function saveAllergies($id_customer_code)
     {
-        // Eliminar condiciones existentes
-        Db::getInstance()->delete('qsp_customer_conditions', 'id_customer_code = ' . $id_customer_code);
-        
-        // Insertar nuevas condiciones
-        $this->insertConditions($id_customer_code, $conditions, $notes);
-    }
+        Db::getInstance()->delete('qsp_customer_allergies', 'id_customer_code = ' . (int)$id_customer_code);
 
-    private function insertAllergies($id_customer_code, $allergies, $notes)
-    {
-        foreach ($allergies as $index => $allergy) {
-            if ($allergy) {
-                Db::getInstance()->insert('qsp_customer_allergies', [
-                    'id_customer_code' => $id_customer_code,
-                    'allergen' => pSQL($allergy),
-                    'note' => pSQL($notes[$index] ?? ''),
-                ]);
+        $allergens = Tools::getValue('allergen', []);
+        $notes = Tools::getValue('allergy_note', []);
+
+        foreach ($allergens as $index => $allergen) {
+            if (empty($allergen)) {
+                continue;
             }
+
+            Db::getInstance()->insert('qsp_customer_allergies', [
+                'id_customer_code' => (int)$id_customer_code,
+                'allergen' => pSQL($allergen),
+                'note' => pSQL($notes[$index]),
+            ]);
         }
     }
 
-    private function updateAllergies($id_customer_code, $allergies, $notes)
+    private function saveMedications($id_customer_code)
     {
-        // Eliminar alergias existentes
-        Db::getInstance()->delete('qsp_customer_allergies', 'id_customer_code = ' . $id_customer_code);
-        
-        // Insertar nuevas alergias
-        $this->insertAllergies($id_customer_code, $allergies, $notes);
-    }
+        Db::getInstance()->delete('qsp_customer_medications', 'id_customer_code = ' . (int)$id_customer_code);
 
-    private function insertMedications($id_customer_code, $medications, $doses, $frequencies, $notes)
-    {
-        foreach ($medications as $index => $medication) {
-            if ($medication) {
-                Db::getInstance()->insert('qsp_customer_medications', [
-                    'id_customer_code' => $id_customer_code,
-                    'med_name' => pSQL($medication),
-                    'dose' => pSQL($doses[$index] ?? ''),
-                    'frequency' => pSQL($frequencies[$index] ?? ''),
-                    'note' => pSQL($notes[$index] ?? ''),
-                ]);
+        $names = Tools::getValue('med_name', []);
+        $doses = Tools::getValue('med_dose', []);
+        $frequencies = Tools::getValue('med_frequency', []);
+        $notes = Tools::getValue('med_note', []);
+
+        foreach ($names as $index => $name) {
+            if (empty($name)) {
+                continue;
             }
-        }
-    }
 
-    private function updateMedications($id_customer_code, $medications, $doses, $frequencies, $notes)
-    {
-        // Eliminar medicamentos existentes
-        Db::getInstance()->delete('qsp_customer_medications', 'id_customer_code = ' . $id_customer_code);
-        
-        // Insertar nuevos medicamentos
-        $this->insertMedications($id_customer_code, $medications, $doses, $frequencies, $notes);
+            Db::getInstance()->insert('qsp_customer_medications', [
+                'id_customer_code' => (int)$id_customer_code,
+                'med_name' => pSQL($name),
+                'dose' => pSQL($doses[$index]),
+                'frequency' => pSQL($frequencies[$index]),
+                'note' => pSQL($notes[$index]),
+            ]);
+        }
     }
 }

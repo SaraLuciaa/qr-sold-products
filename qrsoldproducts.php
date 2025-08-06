@@ -32,7 +32,6 @@ class QrSoldProducts extends Module
     {
         return parent::install()
             && $this->createDatabaseTables()
-            && $this->updateDatabaseTables()
             && $this->installTab()
             && $this->registerHook('displayAdminOrderTop')
             && $this->registerHook('displayCustomerAccount')
@@ -63,93 +62,104 @@ class QrSoldProducts extends Module
         ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
 
         $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'qsp_customer_codes` (
-          `id_customer_code` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-          `id_qr_code` INT UNSIGNED NOT NULL,
-          `id_customer` INT UNSIGNED DEFAULT NULL,
-          `user_name` VARCHAR(128) NOT NULL,
-          `user_type_dni` ENUM("CC","TI","CE") NOT NULL,
-          `user_dni` VARCHAR(64) NOT NULL,
-          `user_birthdate` DATE DEFAULT NULL,
-          `user_gender` ENUM("MASCULINO","FEMENINO","OTRO") DEFAULT NULL,
-          `user_stature_cm` SMALLINT UNSIGNED DEFAULT NULL,
-          `user_address` VARCHAR(255) DEFAULT NULL,
-          `user_phone_mobile` VARCHAR(20) DEFAULT NULL,
-          `user_phone_home` VARCHAR(20) DEFAULT NULL,
-          `user_phone_work` VARCHAR(20) DEFAULT NULL,
-          `user_whatsapp_e164` VARCHAR(20) DEFAULT NULL,
-          `user_weight_kg` DECIMAL(5,2) DEFAULT NULL,
-          `user_has_eps` TINYINT(1) NOT NULL DEFAULT 0,
-          `user_eps_name` VARCHAR(128) DEFAULT NULL,
-          `user_has_prepaid` TINYINT(1) NOT NULL DEFAULT 0,
-          `user_prepaid_name` VARCHAR(128) DEFAULT NULL,
-          `user_blood_type` ENUM("O+","O-","A+","A-","B+","B-","AB+","AB-") DEFAULT NULL,
-          `user_accepts_transfusions` TINYINT(1) NOT NULL DEFAULT 1,
-          `user_organ_donor` TINYINT(1) NOT NULL DEFAULT 0,
-          `extra_notes` TEXT DEFAULT NULL,
-          `date_activated` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          PRIMARY KEY (`id_customer_code`),
-          INDEX (`id_qr_code`),
-          FOREIGN KEY (`id_qr_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_qr_codes`(`id_qr_code`) ON DELETE CASCADE
+            `id_customer_code` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `id_qr_code` INT UNSIGNED NOT NULL,
+            `id_customer` INT UNSIGNED DEFAULT NULL,
+            `user_name` VARCHAR(128) NOT NULL,
+            `user_type_dni` ENUM("CC","TI","CE") NOT NULL,
+            `user_dni` VARCHAR(64) NOT NULL,
+            `user_birthdate` DATE DEFAULT NULL,
+            `user_gender` ENUM("MASCULINO","FEMENINO","OTRO") DEFAULT NULL,
+            `user_stature_cm` SMALLINT UNSIGNED DEFAULT NULL,
+            `user_address` VARCHAR(255) DEFAULT NULL,
+
+            `user_mobile_country_id` INT UNSIGNED NOT NULL,
+            `user_mobile_number` VARCHAR(20) NOT NULL,
+
+            `user_home_country_id` INT UNSIGNED DEFAULT NULL,
+            `user_home_number` VARCHAR(20) DEFAULT NULL,
+
+            `user_work_country_id` INT UNSIGNED DEFAULT NULL,
+            `user_work_number` VARCHAR(20) DEFAULT NULL,
+
+            `user_weight_kg` DECIMAL(5,2) DEFAULT NULL,
+            `user_has_eps` TINYINT(1) NOT NULL DEFAULT 0,
+            `user_eps_name` VARCHAR(128) DEFAULT NULL,
+            `user_has_prepaid` TINYINT(1) NOT NULL DEFAULT 0,
+            `user_prepaid_name` VARCHAR(128) DEFAULT NULL,
+            `user_blood_type` ENUM("O+","O-","A+","A-","B+","B-","AB+","AB-") DEFAULT NULL,
+            `user_accepts_transfusions` TINYINT(1) NOT NULL DEFAULT 1,
+            `user_organ_donor` TINYINT(1) NOT NULL DEFAULT 0,
+            `extra_notes` TEXT DEFAULT NULL,
+            `date_activated` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id_customer_code`),
+            INDEX (`id_qr_code`),
+            FOREIGN KEY (`id_qr_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_qr_codes`(`id_qr_code`) ON DELETE CASCADE,
+            FOREIGN KEY (`user_mobile_country_id`) REFERENCES `' . _DB_PREFIX_ . 'country`(`id_country`),
+            FOREIGN KEY (`user_home_country_id`) REFERENCES `' . _DB_PREFIX_ . 'country`(`id_country`),
+            FOREIGN KEY (`user_work_country_id`) REFERENCES `' . _DB_PREFIX_ . 'country`(`id_country`)
         ) ENGINE=' . _MYSQL_ENGINE_ . '';
 
         $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'qsp_customer_contacts` (
-          `id_contact` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-          `id_customer_code` INT UNSIGNED NOT NULL,
-          `contact_index` TINYINT UNSIGNED NOT NULL,
-          `contact_name` VARCHAR(128) NOT NULL,
-          `contact_phone` VARCHAR(20) DEFAULT NULL,
-          `contact_whatsapp_e164` VARCHAR(20) DEFAULT NULL,
-          `contact_email` VARCHAR(128) DEFAULT NULL,
-          `relationship` VARCHAR(128) DEFAULT NULL,
-          PRIMARY KEY (`id_contact`),
-          UNIQUE KEY `uniq_contact_slot` (`id_customer_code`,`contact_index`),
-          FOREIGN KEY (`id_customer_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_customer_codes`(`id_customer_code`) ON DELETE CASCADE
+            `id_contact` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `id_customer_code` INT UNSIGNED NOT NULL,
+            `contact_index` TINYINT UNSIGNED NOT NULL,
+            `contact_name` VARCHAR(128) NOT NULL,
+
+            `contact_country_id` INT UNSIGNED NOT NULL,
+            `contact_phone_number` VARCHAR(20) NOT NULL,
+
+            `contact_email` VARCHAR(128) DEFAULT NULL,
+            `relationship` VARCHAR(128) DEFAULT NULL,
+            PRIMARY KEY (`id_contact`),
+            UNIQUE KEY `uniq_contact_slot` (`id_customer_code`,`contact_index`),
+            FOREIGN KEY (`id_customer_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_customer_codes`(`id_customer_code`) ON DELETE CASCADE,
+            FOREIGN KEY (`contact_country_id`) REFERENCES `' . _DB_PREFIX_ . 'country`(`id_country`)
         ) ENGINE=' . _MYSQL_ENGINE_ . '';
 
         $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'qsp_customer_covid_vaccine` (
-          `id_covid` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-          `id_customer_code` INT UNSIGNED NOT NULL,
-          `vaccinated` TINYINT(1) NOT NULL DEFAULT 0,
-          `doses` TINYINT UNSIGNED DEFAULT NULL,
-          `last_dose_date` DATE DEFAULT NULL,
-          `notes` VARCHAR(255) DEFAULT NULL,
-          PRIMARY KEY (`id_covid`),
-          INDEX (`id_customer_code`),
-          FOREIGN KEY (`id_customer_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_customer_codes`(`id_customer_code`) ON DELETE CASCADE
+            `id_covid` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `id_customer_code` INT UNSIGNED NOT NULL,
+            `vaccinated` TINYINT(1) NOT NULL DEFAULT 0,
+            `doses` TINYINT UNSIGNED DEFAULT NULL,
+            `last_dose_date` DATE DEFAULT NULL,
+            `notes` VARCHAR(255) DEFAULT NULL,
+            PRIMARY KEY (`id_covid`),
+            INDEX (`id_customer_code`),
+            FOREIGN KEY (`id_customer_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_customer_codes`(`id_customer_code`) ON DELETE CASCADE
         ) ENGINE=' . _MYSQL_ENGINE_ . '';
 
         $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'qsp_customer_conditions` (
-          `id_condition` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-          `id_customer_code` INT UNSIGNED NOT NULL,
-          `condition_name` VARCHAR(128) NOT NULL,
-          `note` VARCHAR(255) DEFAULT NULL,
-          PRIMARY KEY (`id_condition`),
-          INDEX (`id_customer_code`),
-          FOREIGN KEY (`id_customer_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_customer_codes`(`id_customer_code`) ON DELETE CASCADE
+            `id_condition` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `id_customer_code` INT UNSIGNED NOT NULL,
+            `condition_name` VARCHAR(128) NOT NULL,
+            `note` VARCHAR(255) DEFAULT NULL,
+            PRIMARY KEY (`id_condition`),
+            INDEX (`id_customer_code`),
+            FOREIGN KEY (`id_customer_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_customer_codes`(`id_customer_code`) ON DELETE CASCADE
         ) ENGINE=' . _MYSQL_ENGINE_ . '';
 
         $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'qsp_customer_allergies` (
-          `id_allergy` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-          `id_customer_code` INT UNSIGNED NOT NULL,
-          `allergen` VARCHAR(128) NOT NULL,
-          `note` VARCHAR(255) DEFAULT NULL,
-          PRIMARY KEY (`id_allergy`),
-          INDEX (`id_customer_code`),
-          FOREIGN KEY (`id_customer_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_customer_codes`(`id_customer_code`) ON DELETE CASCADE
+            `id_allergy` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `id_customer_code` INT UNSIGNED NOT NULL,
+            `allergen` VARCHAR(128) NOT NULL,
+            `note` VARCHAR(255) DEFAULT NULL,
+            PRIMARY KEY (`id_allergy`),
+            INDEX (`id_customer_code`),
+            FOREIGN KEY (`id_customer_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_customer_codes`(`id_customer_code`) ON DELETE CASCADE
         ) ENGINE=' . _MYSQL_ENGINE_ . '';
 
         $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'qsp_customer_medications` (
-          `id_medication` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-          `id_customer_code` INT UNSIGNED NOT NULL,
-          `med_name` VARCHAR(128) NOT NULL,
-          `dose` VARCHAR(64) DEFAULT NULL,
-          `frequency` VARCHAR(64) DEFAULT NULL,
-          `note` VARCHAR(255) DEFAULT NULL,
-          PRIMARY KEY (`id_medication`),
-          INDEX (`id_customer_code`),
-          FOREIGN KEY (`id_customer_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_customer_codes`(`id_customer_code`) ON DELETE CASCADE
+            `id_medication` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `id_customer_code` INT UNSIGNED NOT NULL,
+            `med_name` VARCHAR(128) NOT NULL,
+            `dose` VARCHAR(64) DEFAULT NULL,
+            `frequency` VARCHAR(64) DEFAULT NULL,
+            `note` VARCHAR(255) DEFAULT NULL,
+            PRIMARY KEY (`id_medication`),
+            INDEX (`id_customer_code`),
+            FOREIGN KEY (`id_customer_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_customer_codes`(`id_customer_code`) ON DELETE CASCADE
         ) ENGINE=' . _MYSQL_ENGINE_ . '';
-
 
         $sql[] = "CREATE TABLE IF NOT EXISTS `"._DB_PREFIX_."qsp_product_qr_config` (
             `id_product` INT(11) NOT NULL,
@@ -163,197 +173,6 @@ class QrSoldProducts extends Module
             }
         }
 
-        return true;
-    }
-
-    private function updateDatabaseTables()
-    {
-        $sql = [];
-        
-        // Verificar si la columna user_whatsapp_e164 existe en qsp_customer_codes
-        $columnExists = Db::getInstance()->executeS("
-            SELECT COLUMN_NAME 
-            FROM INFORMATION_SCHEMA.COLUMNS 
-            WHERE TABLE_SCHEMA = DATABASE() 
-            AND TABLE_NAME = '" . _DB_PREFIX_ . "qsp_customer_codes' 
-            AND COLUMN_NAME = 'user_whatsapp_e164'
-        ");
-        
-        if (empty($columnExists)) {
-            $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'qsp_customer_codes` 
-                      ADD COLUMN `user_whatsapp_e164` VARCHAR(20) DEFAULT NULL AFTER `user_phone_work`';
-        }
-        
-        // Verificar si la columna user_has_eps existe
-        $columnExists = Db::getInstance()->executeS("
-            SELECT COLUMN_NAME 
-            FROM INFORMATION_SCHEMA.COLUMNS 
-            WHERE TABLE_SCHEMA = DATABASE() 
-            AND TABLE_NAME = '" . _DB_PREFIX_ . "qsp_customer_codes' 
-            AND COLUMN_NAME = 'user_has_eps'
-        ");
-        
-        if (empty($columnExists)) {
-            $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'qsp_customer_codes` 
-                      ADD COLUMN `user_has_eps` TINYINT(1) NOT NULL DEFAULT 0 AFTER `user_weight_kg`';
-        }
-        
-        // Verificar si la columna user_has_prepaid existe
-        $columnExists = Db::getInstance()->executeS("
-            SELECT COLUMN_NAME 
-            FROM INFORMATION_SCHEMA.COLUMNS 
-            WHERE TABLE_SCHEMA = DATABASE() 
-            AND TABLE_NAME = '" . _DB_PREFIX_ . "qsp_customer_codes' 
-            AND COLUMN_NAME = 'user_has_prepaid'
-        ");
-        
-        if (empty($columnExists)) {
-            $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'qsp_customer_codes` 
-                      ADD COLUMN `user_has_prepaid` TINYINT(1) NOT NULL DEFAULT 0 AFTER `user_eps_name`';
-        }
-        
-        // Verificar si la columna user_accepts_transfusions existe
-        $columnExists = Db::getInstance()->executeS("
-            SELECT COLUMN_NAME 
-            FROM INFORMATION_SCHEMA.COLUMNS 
-            WHERE TABLE_SCHEMA = DATABASE() 
-            AND TABLE_NAME = '" . _DB_PREFIX_ . "qsp_customer_codes' 
-            AND COLUMN_NAME = 'user_accepts_transfusions'
-        ");
-        
-        if (empty($columnExists)) {
-            $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'qsp_customer_codes` 
-                      ADD COLUMN `user_accepts_transfusions` TINYINT(1) NOT NULL DEFAULT 1 AFTER `user_blood_type`';
-        }
-        
-        // Verificar si la columna user_organ_donor existe
-        $columnExists = Db::getInstance()->executeS("
-            SELECT COLUMN_NAME 
-            FROM INFORMATION_SCHEMA.COLUMNS 
-            WHERE TABLE_SCHEMA = DATABASE() 
-            AND TABLE_NAME = '" . _DB_PREFIX_ . "qsp_customer_codes' 
-            AND COLUMN_NAME = 'user_organ_donor'
-        ");
-        
-        if (empty($columnExists)) {
-            $sql[] = 'ALTER TABLE `' . _DB_PREFIX_ . 'qsp_customer_codes` 
-                      ADD COLUMN `user_organ_donor` TINYINT(1) NOT NULL DEFAULT 0 AFTER `user_accepts_transfusions`';
-        }
-        
-        // Verificar si la tabla qsp_customer_contacts existe
-        $tableExists = Db::getInstance()->executeS("
-            SELECT TABLE_NAME 
-            FROM INFORMATION_SCHEMA.TABLES 
-            WHERE TABLE_SCHEMA = DATABASE() 
-            AND TABLE_NAME = '" . _DB_PREFIX_ . "qsp_customer_contacts'
-        ");
-        
-        if (empty($tableExists)) {
-            $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'qsp_customer_contacts` (
-              `id_contact` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-              `id_customer_code` INT UNSIGNED NOT NULL,
-              `contact_index` TINYINT UNSIGNED NOT NULL,
-              `contact_name` VARCHAR(128) NOT NULL,
-              `contact_phone` VARCHAR(20) DEFAULT NULL,
-              `contact_whatsapp_e164` VARCHAR(20) DEFAULT NULL,
-              `contact_email` VARCHAR(128) DEFAULT NULL,
-              `relationship` VARCHAR(128) DEFAULT NULL,
-              PRIMARY KEY (`id_contact`),
-              UNIQUE KEY `uniq_contact_slot` (`id_customer_code`,`contact_index`),
-              FOREIGN KEY (`id_customer_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_customer_codes`(`id_customer_code`) ON DELETE CASCADE
-            ) ENGINE=' . _MYSQL_ENGINE_ . '';
-        }
-        
-        // Verificar si la tabla qsp_customer_covid_vaccine existe
-        $tableExists = Db::getInstance()->executeS("
-            SELECT TABLE_NAME 
-            FROM INFORMATION_SCHEMA.TABLES 
-            WHERE TABLE_SCHEMA = DATABASE() 
-            AND TABLE_NAME = '" . _DB_PREFIX_ . "qsp_customer_covid_vaccine'
-        ");
-        
-        if (empty($tableExists)) {
-            $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'qsp_customer_covid_vaccine` (
-              `id_covid` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-              `id_customer_code` INT UNSIGNED NOT NULL,
-              `vaccinated` TINYINT(1) NOT NULL DEFAULT 0,
-              `doses` TINYINT UNSIGNED DEFAULT NULL,
-              `last_dose_date` DATE DEFAULT NULL,
-              `notes` VARCHAR(255) DEFAULT NULL,
-              PRIMARY KEY (`id_covid`),
-              INDEX (`id_customer_code`),
-              FOREIGN KEY (`id_customer_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_customer_codes`(`id_customer_code`) ON DELETE CASCADE
-            ) ENGINE=' . _MYSQL_ENGINE_ . '';
-        }
-        
-        // Verificar si la tabla qsp_customer_conditions existe
-        $tableExists = Db::getInstance()->executeS("
-            SELECT TABLE_NAME 
-            FROM INFORMATION_SCHEMA.TABLES 
-            WHERE TABLE_SCHEMA = DATABASE() 
-            AND TABLE_NAME = '" . _DB_PREFIX_ . "qsp_customer_conditions'
-        ");
-        
-        if (empty($tableExists)) {
-            $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'qsp_customer_conditions` (
-              `id_condition` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-              `id_customer_code` INT UNSIGNED NOT NULL,
-              `condition_name` VARCHAR(128) NOT NULL,
-              `note` VARCHAR(255) DEFAULT NULL,
-              PRIMARY KEY (`id_condition`),
-              INDEX (`id_customer_code`),
-              FOREIGN KEY (`id_customer_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_customer_codes`(`id_customer_code`) ON DELETE CASCADE
-            ) ENGINE=' . _MYSQL_ENGINE_ . '';
-        }
-        
-        // Verificar si la tabla qsp_customer_allergies existe
-        $tableExists = Db::getInstance()->executeS("
-            SELECT TABLE_NAME 
-            FROM INFORMATION_SCHEMA.TABLES 
-            WHERE TABLE_SCHEMA = DATABASE() 
-            AND TABLE_NAME = '" . _DB_PREFIX_ . "qsp_customer_allergies'
-        ");
-        
-        if (empty($tableExists)) {
-            $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'qsp_customer_allergies` (
-              `id_allergy` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-              `id_customer_code` INT UNSIGNED NOT NULL,
-              `allergen` VARCHAR(128) NOT NULL,
-              `note` VARCHAR(255) DEFAULT NULL,
-              PRIMARY KEY (`id_allergy`),
-              INDEX (`id_customer_code`),
-              FOREIGN KEY (`id_customer_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_customer_codes`(`id_customer_code`) ON DELETE CASCADE
-            ) ENGINE=' . _MYSQL_ENGINE_ . '';
-        }
-        
-        // Verificar si la tabla qsp_customer_medications existe
-        $tableExists = Db::getInstance()->executeS("
-            SELECT TABLE_NAME 
-            FROM INFORMATION_SCHEMA.TABLES 
-            WHERE TABLE_SCHEMA = DATABASE() 
-            AND TABLE_NAME = '" . _DB_PREFIX_ . "qsp_customer_medications'
-        ");
-        
-        if (empty($tableExists)) {
-            $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'qsp_customer_medications` (
-              `id_medication` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-              `id_customer_code` INT UNSIGNED NOT NULL,
-              `med_name` VARCHAR(128) NOT NULL,
-              `dose` VARCHAR(64) DEFAULT NULL,
-              `frequency` VARCHAR(64) DEFAULT NULL,
-              `note` VARCHAR(255) DEFAULT NULL,
-              PRIMARY KEY (`id_medication`),
-              INDEX (`id_customer_code`),
-              FOREIGN KEY (`id_customer_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_customer_codes`(`id_customer_code`) ON DELETE CASCADE
-            ) ENGINE=' . _MYSQL_ENGINE_ . '';
-        }
-        
-        foreach ($sql as $query) {
-            if (!Db::getInstance()->execute($query)) {
-                return false;
-            }
-        }
-        
         return true;
     }
 

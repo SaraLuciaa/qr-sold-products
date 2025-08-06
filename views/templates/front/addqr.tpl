@@ -83,23 +83,55 @@
         <input type="text" name="user_address" id="user_address" class="form-control"
                value="{$qr_data.user_address|default:''|escape:'html'}">
     </div>
-    
-    <div class="form-group">
-        <label for="user_phone_mobile">Teléfono móvil</label>
-        <input type="text" name="user_phone_mobile" id="user_phone_mobile" class="form-control"
-               value="{$qr_data.user_phone_mobile|default:''|escape:'html'}">
+        <div class="form-group">
+            <label for="user_mobile_country_id">Teléfono móvil</label>
+        <div class="form-inline">
+            <select name="user_mobile_country_id" class="form-control mr-2" style="width:auto;">
+                <option value="">— Selecciona país —</option>
+                {foreach from=$countries item=country}
+                    <option value="{$country.id_country}" 
+                        {if $qr_data.user_mobile_country_id == $country.id_country}selected{/if}>
+                        +{$country.call_prefix} ({$country.name})
+                    </option>
+                {/foreach}
+            </select>
+            <input type="tel" name="user_mobile_number" class="form-control" style="width:auto;" 
+                value="{$qr_data.user_mobile_number|default:''|escape:'html'}">
+        </div>
     </div>
     
     <div class="form-group">
-        <label for="user_phone_home">Teléfono residencial</label>
-        <input type="text" name="user_phone_home" id="user_phone_home" class="form-control"
-               value="{$qr_data.user_phone_home|default:''|escape:'html'}">
+        <label for="user_home_number">Teléfono residencial</label>
+        <div class="form-inline">
+            <select name="user_home_country_id" class="form-control mr-2" style="width:auto;">
+                <option value="">— Selecciona país —</option>
+                {foreach from=$countries item=country}
+                    <option value="{$country.id_country}"
+                    {if $qr_data.user_home_country_id == $country.id_country}selected{/if}>
+                    +{$country.call_prefix} ({$country.name})
+                    </option>
+                {/foreach}
+            </select>
+            <input type="tel" name="user_home_number" id="user_home_number" class="form-control" style="width:auto;" 
+                value="{$qr_data.user_home_number|default:''|escape:'html'}">
+        </div>
     </div>
     
     <div class="form-group">
-        <label for="user_phone_work">Teléfono del trabajo</label>
-        <input type="text" name="user_phone_work" id="user_phone_work" class="form-control"
-               value="{$qr_data.user_phone_work|default:''|escape:'html'}">
+        <label for="user_work_number">Teléfono del trabajo</label>
+        <div class="form-inline">
+            <select name="user_work_country_id" class="form-control mr-2" style="width:auto;">
+                <option value="">— Selecciona país —</option>
+                {foreach from=$countries item=country}
+                    <option value="{$country.id_country}" 
+                        {if $qr_data.user_work_country_id == $country.id_country}selected{/if}>
+                        +{$country.call_prefix} ({$country.name})
+                    </option>
+                {/foreach}
+            </select>
+            <input type="tel" name="user_work_number" id="user_work_number" class="form-control" style="width:auto;" 
+                value="{$qr_data.user_work_number|default:''|escape:'html'}">
+        </div>
     </div>
     
     <div class="form-group">
@@ -188,8 +220,20 @@
 
             <div class="form-group">
                 <label for="contact_phone_0">Teléfono</label>
-                <input type="text" name="contact_phone[]" id="contact_phone_0" class="form-control"
-                       value="{$qr_data.contacts.0.contact_phone|default:''|escape:'html'}">
+                <div class="form-inline">
+                    <select name="contact_country_id[]" class="form-control mr-2" style="width:auto;">
+                        <option value="">— Selecciona país —</option>
+
+                        {foreach from=$countries item=country}
+                            <option value="{$country.id_country}" 
+                                {if $qr_data.contacts.0.contact_country_id == $country.id_country}selected{/if}>
+                                +{$country.call_prefix} ({$country.name})
+                            </option>
+                        {/foreach}
+                    </select>
+                    <input type="tel" name="contact_phone[]" id="contact_phone_0" class="form-control" style="width:auto;"
+                           value="{$qr_data.contacts.0.contact_phone_number|default:''|escape:'html'}">
+                </div>
             </div>
 
             <div class="form-group">
@@ -200,7 +244,7 @@
 
             <div class="form-group">
                 <label for="relationship_0">Parentesco</label>
-                <input type="text" name="relationship[]" id="relationship_0" class="form-control" 
+                <input type="text" name="contact_relationship[]" id="relationship_0" class="form-control" 
                        value="{$qr_data.contacts.0.relationship|default:''|escape:'html'}">
             </div>
         </div>
@@ -215,8 +259,20 @@
             </div>
             <div class="form-group">
                 <label for="contact_phone_1">Teléfono</label>
-                <input type="text" name="contact_phone[]" id="contact_phone_1" class="form-control"
-                    value="{$qr_data.contacts.1.contact_phone|default:''|escape:'html'}">
+                <div class="form-inline">
+                    <select name="contact_country_id[]" class="form-control mr-2" style="width:auto;">
+                        <option value="">— Selecciona país —</option>
+
+                        {foreach from=$countries item=country}
+                            <option value="{$country.id_country}" 
+                                {if $qr_data.contacts.1.contact_country_id == $country.id_country}selected{/if}>
+                                +{$country.call_prefix} ({$country.name})
+                            </option>
+                        {/foreach}
+                    </select>
+                    <input type="tel" name="contact_phone[]" id="contact_phone_1" class="form-control" style="width:auto;"
+                           value="{$qr_data.contacts.1.contact_phone_number|default:''|escape:'html'}">
+                </div>
             </div>
             <div class="form-group">
                 <label for="contact_email_1">Correo electrónico</label>
@@ -225,7 +281,7 @@
             </div>
             <div class="form-group">
                 <label for="relationship_1">Parentesco</label>
-                <input type="text" name="relationship[]" id="relationship_1" class="form-control" 
+                <input type="text" name="contact_relationship[]" id="relationship_1" class="form-control" 
                     value="{$qr_data.contacts.1.relationship|default:''|escape:'html'}">
             </div>
         </div>
@@ -278,11 +334,11 @@
                 <div class="condition-item">
                     <div>
                         <label for="condition_{$index}">Condición médica</label>
-                        <input type="text" name="conditions[]" id="condition_{$index}" class="form-control" value="{$condition.condition_name|escape:'html'}">
+                        <input type="text" name="condition_name[]" id="condition_{$index}" class="form-control" value="{$condition.condition_name|escape:'html'}">
                     </div>
                     <div>
                         <label for="condition_note_{$index}">Nota</label>
-                        <input type="text" name="condition_notes[]" id="condition_note_{$index}" class="form-control" value="{$condition.note|escape:'html'}">
+                        <input type="text" name="condition_note[]" id="condition_note_{$index}" class="form-control" value="{$condition.note|escape:'html'}">
                     </div>
                 </div>
             {/foreach}
@@ -290,11 +346,11 @@
             <div class="condition-item">
                 <div>
                     <label>Condición médica</label>
-                    <input type="text" name="conditions[]" class="form-control">
+                    <input type="text" name="condition_name[]" class="form-control">
                 </div>
                 <div>
                     <label>Nota</label>
-                    <input type="text" name="condition_notes[]" class="form-control">
+                    <input type="text" name="condition_note[]" class="form-control">
                 </div>
             </div>
         {/if}
@@ -317,11 +373,11 @@
                 <div class="allergy-item">
                     <div>
                         <label for="allergy_{$index}">Alergia</label>
-                        <input type="text" name="allergies[]" id="allergy_{$index}" class="form-control" value="{$allergy.allergen|escape:'html'}">
+                        <input type="text" name="allergen[]" id="allergy_{$index}" class="form-control" value="{$allergy.allergen|escape:'html'}">
                     </div>
                     <div>
                         <label for="allergy_note_{$index}">Nota</label>
-                        <input type="text" name="allergy_notes[]" id="allergy_note_{$index}" class="form-control" value="{$allergy.note|escape:'html'}">
+                        <input type="text" name="allergy_note[]" id="allergy_note_{$index}" class="form-control" value="{$allergy.note|escape:'html'}">
                     </div>
                 </div>
             {/foreach}
@@ -329,11 +385,11 @@
             <div class="allergy-item">
                 <div>
                     <label>Alergia</label>
-                    <input type="text" name="allergies[]" class="form-control">
+                    <input type="text" name="allergen[]" class="form-control">
                 </div>
                 <div>
                     <label>Nota</label>
-                    <input type="text" name="allergy_notes[]" class="form-control">
+                    <input type="text" name="allergy_note[]" class="form-control">
                 </div>
             </div>
         {/if}
@@ -355,19 +411,19 @@
                 <div class="medication-item">
                     <div>
                         <label for="med_{$index}">Medicamento</label>
-                        <input type="text" name="medications[]" id="med_{$index}" class="form-control" value="{$medication.med_name|escape:'html'}">
+                        <input type="text" name="med_name[]" id="med_{$index}" class="form-control" value="{$medication.med_name|escape:'html'}">
                     </div>
                     <div>
                         <label for="dose_{$index}">Dosis</label>
-                        <input type="text" name="med_doses[]" id="dose_{$index}" class="form-control" value="{$medication.dose|escape:'html'}">
+                        <input type="text" name="med_dose[]" id="dose_{$index}" class="form-control" value="{$medication.dose|escape:'html'}">
                     </div>
                     <div>
                         <label for="freq_{$index}">Frecuencia</label>
-                        <input type="text" name="med_frequencies[]" id="freq_{$index}" class="form-control" value="{$medication.frequency|escape:'html'}">
+                        <input type="text" name="med_frequency[]" id="freq_{$index}" class="form-control" value="{$medication.frequency|escape:'html'}">
                     </div>
                     <div>
                         <label for="note_{$index}">Nota</label>
-                        <input type="text" name="med_notes[]" id="note_{$index}" class="form-control" value="{$medication.note|escape:'html'}">
+                        <input type="text" name="med_note[]" id="note_{$index}" class="form-control" value="{$medication.note|escape:'html'}">
                     </div>
                 </div>
             {/foreach}
@@ -375,19 +431,19 @@
             <div class="medication-item">
                 <div>
                     <label>Medicamento</label>
-                    <input type="text" name="medications[]" class="form-control">
+                    <input type="text" name="med_name[]" class="form-control">
                 </div>
                 <div>
                     <label>Dosis</label>
-                    <input type="text" name="med_doses[]" class="form-control">
+                    <input type="text" name="med_dose[]" class="form-control">
                 </div>
                 <div>
                     <label>Frecuencia</label>
-                    <input type="text" name="med_frequencies[]" class="form-control">
+                    <input type="text" name="med_frequency[]" class="form-control">
                 </div>
                 <div>
                     <label>Nota</label>
-                    <input type="text" name="med_notes[]" class="form-control">
+                    <input type="text" name="med_note[]" class="form-control">
                 </div>
             </div>
         {/if}
@@ -404,7 +460,7 @@
 
 <!-- Botones principales con mejor separación -->
 <div class="form-actions text-center">
-    <button type="submit" name="submit_qr_code" class="btn btn-primary btn-lg px-5">
+    <button type="submit" name="submit_add_qr" class="btn btn-primary btn-lg px-5">
         {if $edit_mode}
             Guardar cambios
         {else}
@@ -525,11 +581,11 @@ document.addEventListener('DOMContentLoaded', function() {
         newItem.innerHTML = `
             <div class="col-md-6">
                 <label>Condición médica</label>
-                <input type="text" name="conditions[]" class="form-control">
+                <input type="text" name="condition_name[]" class="form-control">
             </div>
             <div class="col-md-6">
                 <label>Nota</label>
-                <input type="text" name="condition_notes[]" class="form-control">
+                <input type="text" name="condition_note[]" class="form-control">
             </div>
         `;
         container.appendChild(newItem);
@@ -543,11 +599,11 @@ document.addEventListener('DOMContentLoaded', function() {
         newItem.innerHTML = `
             <div class="col-md-6">
                 <label>Alergia</label>
-                <input type="text" name="allergies[]" class="form-control">
+                <input type="text" name="allergen[]" class="form-control">
             </div>
             <div class="col-md-6">
                 <label>Nota</label>
-                <input type="text" name="allergy_notes[]" class="form-control">
+                <input type="text" name="allergy_note[]" class="form-control">
             </div>
         `;
         container.appendChild(newItem);
@@ -561,19 +617,19 @@ document.addEventListener('DOMContentLoaded', function() {
         newItem.innerHTML = `
             <div class="col-md-3">
                 <label>Medicamento</label>
-                <input type="text" name="medications[]" class="form-control">
+                <input type="text" name="med_name[]" class="form-control">
             </div>
             <div class="col-md-3">
                 <label>Dosis</label>
-                <input type="text" name="med_doses[]" class="form-control">
+                <input type="text" name="med_dose[]" class="form-control">
             </div>
             <div class="col-md-3">
                 <label>Frecuencia</label>
-                <input type="text" name="med_frequencies[]" class="form-control">
+                <input type="text" name="med_frequency[]" class="form-control">
             </div>
             <div class="col-md-3">
                 <label>Nota</label>
-                <input type="text" name="med_notes[]" class="form-control">
+                <input type="text" name="med_note[]" class="form-control">
             </div>
         `;
         container.appendChild(newItem);
