@@ -20,7 +20,31 @@ class QrsoldproductsLocationhookModuleFrontController extends ModuleFrontControl
             $lon = (float) $input['lon'];
             $qr_code = pSQL($input['qr_code']);
         
-            $user_name = strtoupper(Db::getInstance()->getValue("SELECT user_name FROM " . _DB_PREFIX_ . "qsp_customer_codes WHERE id_qr_code = '$qr_code'"));
+            // Obtener el user_name usando la consulta correcta que une las tablas
+            $user_name = strtoupper(Db::getInstance()->getValue("
+                SELECT cc.user_name 
+                FROM " . _DB_PREFIX_ . "qsp_qr_codes q
+                INNER JOIN " . _DB_PREFIX_ . "qsp_customer_codes cc ON cc.id_qr_code = q.id_qr_code
+                WHERE q.code = '$qr_code' AND q.status = 'ACTIVO'
+            "));
+
+            // Log para debug
+            file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "QR_CODE: $qr_code, USER_NAME: " . ($user_name ?: 'NO ENCONTRADO') . "\n", FILE_APPEND);
+
+            // Debug: Verificar qué datos existen en la base de datos
+            $debug_qr = Db::getInstance()->executeS("
+                SELECT q.id_qr_code, q.code, q.status, cc.user_name, cc.id_customer_code
+                FROM " . _DB_PREFIX_ . "qsp_qr_codes q
+                LEFT JOIN " . _DB_PREFIX_ . "qsp_customer_codes cc ON cc.id_qr_code = q.id_qr_code
+                WHERE q.code = '$qr_code'
+            ");
+            file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "DEBUG QR DATA:\n" . print_r($debug_qr, true) . "\n", FILE_APPEND);
+
+            // Si no se encuentra el user_name, usar un valor por defecto
+            if (!$user_name) {
+                $user_name = "USUARIO";
+                file_put_contents(_PS_MODULE_DIR_ . 'qrsoldproducts/debug_log.txt', "ADVERTENCIA: No se encontró user_name para QR: $qr_code, usando valor por defecto\n", FILE_APPEND);
+            }
 
             // Buscar los contactos de emergencia asociados al código QR con información de país
             $contacts = Db::getInstance()->executeS("
