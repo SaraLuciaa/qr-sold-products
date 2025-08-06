@@ -22,12 +22,13 @@ class QrsoldproductsLocationhookModuleFrontController extends ModuleFrontControl
         
             $user_name = strtoupper(Db::getInstance()->getValue("SELECT user_name FROM " . _DB_PREFIX_ . "qsp_customer_codes WHERE id_qr_code = '$qr_code'"));
 
-            // Buscar los contactos de emergencia asociados al código QR
+            // Buscar los contactos de emergencia asociados al código QR con información de país
             $contacts = Db::getInstance()->executeS("
-                SELECT c.contact_name, c.contact_phone, cc.user_name
+                SELECT c.contact_name, c.contact_phone_number, co.call_prefix, cc.user_name
                 FROM " . _DB_PREFIX_ . "qsp_qr_codes q
                 INNER JOIN " . _DB_PREFIX_ . "qsp_customer_codes cc ON cc.id_qr_code = q.id_qr_code
                 INNER JOIN " . _DB_PREFIX_ . "qsp_customer_contacts c ON c.id_customer_code = cc.id_customer_code
+                LEFT JOIN " . _DB_PREFIX_ . "country co ON c.contact_country_id = co.id_country
                 WHERE q.code = '$qr_code' AND q.status = 'ACTIVO'
                 ORDER BY c.contact_index ASC
                 LIMIT 2
@@ -41,9 +42,13 @@ class QrsoldproductsLocationhookModuleFrontController extends ModuleFrontControl
 
             $enviados = 0;
             foreach ($contacts as $contact) {
-                $phone = $contact['contact_phone'];
+                $phone = $contact['contact_phone_number'];
+                $country_prefix = $contact['call_prefix'];
+                
                 if ($phone) {
-                    $this->sendLocationViaApiChat($user_name, $phone, $lat, $lon);
+                    // Construir el número completo con código de país
+                    $full_phone = $country_prefix ? $country_prefix . $phone : $phone;
+                    $this->sendLocationViaApiChat($user_name, $full_phone, $lat, $lon);
                     $enviados++;
                 }
             }
@@ -68,8 +73,18 @@ class QrsoldproductsLocationhookModuleFrontController extends ModuleFrontControl
     {
         $url = "https://api.apichat.io/v1/sendLocation";
 
+        // Limpiar el número de teléfono y asegurar que tenga el formato correcto
+        $clean_phone = preg_replace('/\D/', '', $phone);
+        
+        // Si el número ya tiene código de país, usarlo tal como está, si no, agregar el de Colombia (57)
+        if (strlen($clean_phone) < 10) {
+            $clean_phone = "57" . $clean_phone;
+        } elseif (strlen($clean_phone) == 10) {
+            $clean_phone = "57" . $clean_phone;
+        }
+
         $data = [
-            "number" => "57" . preg_replace('/\D/', '', $phone),
+            "number" => $clean_phone,
             "chat_type" => "normal",
             "address" => "Hola, te escribimos de EMERGENCIA ID para informarte que el código QR de Emergencia de " . $user_name . " ha sido escaneado.",
             "latitude" => $lat,

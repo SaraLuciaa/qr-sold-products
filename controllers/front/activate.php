@@ -53,12 +53,43 @@ class QrsoldproductsActivateModuleFrontController extends ModuleFrontController
 
             $id = (int)$petInfo['id_customer_code'];
 
-            // Cargar datos adicionales
+            // Cargar datos adicionales con información de países
             $petInfo['contacts'] = Db::getInstance()->executeS("
-                SELECT * FROM " . _DB_PREFIX_ . "qsp_customer_contacts
-                WHERE id_customer_code = $id
-                ORDER BY contact_index
+                SELECT c.*, co.call_prefix, co_lang.name as country_name
+                FROM " . _DB_PREFIX_ . "qsp_customer_contacts c
+                LEFT JOIN " . _DB_PREFIX_ . "country co ON c.contact_country_id = co.id_country
+                LEFT JOIN " . _DB_PREFIX_ . "country_lang co_lang ON co.id_country = co_lang.id_country 
+                    AND co_lang.id_lang = " . (int)$this->context->language->id . "
+                WHERE c.id_customer_code = $id
+                ORDER BY c.contact_index
             ");
+            
+            // Cargar información de países para los teléfonos del usuario principal
+            $countryInfo = Db::getInstance()->executeS("
+                SELECT 
+                    mobile_co.call_prefix as mobile_prefix,
+                    mobile_lang.name as mobile_country_name,
+                    home_co.call_prefix as home_prefix,
+                    home_lang.name as home_country_name,
+                    work_co.call_prefix as work_prefix,
+                    work_lang.name as work_country_name
+                FROM " . _DB_PREFIX_ . "qsp_customer_codes cc
+                LEFT JOIN " . _DB_PREFIX_ . "country mobile_co ON cc.user_mobile_country_id = mobile_co.id_country
+                LEFT JOIN " . _DB_PREFIX_ . "country_lang mobile_lang ON mobile_co.id_country = mobile_lang.id_country 
+                    AND mobile_lang.id_lang = " . (int)$this->context->language->id . "
+                LEFT JOIN " . _DB_PREFIX_ . "country home_co ON cc.user_home_country_id = home_co.id_country
+                LEFT JOIN " . _DB_PREFIX_ . "country_lang home_lang ON home_co.id_country = home_lang.id_country 
+                    AND home_lang.id_lang = " . (int)$this->context->language->id . "
+                LEFT JOIN " . _DB_PREFIX_ . "country work_co ON cc.user_work_country_id = work_co.id_country
+                LEFT JOIN " . _DB_PREFIX_ . "country_lang work_lang ON work_co.id_country = work_lang.id_country 
+                    AND work_lang.id_lang = " . (int)$this->context->language->id . "
+                WHERE cc.id_customer_code = $id
+                LIMIT 1
+            ");
+            
+            if ($countryInfo && count($countryInfo) > 0) {
+                $petInfo = array_merge($petInfo, $countryInfo[0]);
+            }
 
             $petInfo['covid'] = Db::getInstance()->getRow("
                 SELECT * FROM " . _DB_PREFIX_ . "qsp_customer_covid_vaccine

@@ -4,6 +4,18 @@
 
 {block name='page_content'}
 
+<style>
+.phone-number {
+    font-family: monospace;
+    font-weight: bold;
+    color: #2c5aa0;
+}
+.country-prefix {
+    color: #666;
+    font-size: 0.9em;
+}
+</style>
+
 {include file='module:qrsoldproducts/views/templates/front/locationhook.tpl'}
 
 {if isset($error_message)}
@@ -27,9 +39,27 @@
             <li class="list-group-item"><strong>Género:</strong> {$pet.user_gender}</li>
             <li class="list-group-item"><strong>Estatura:</strong> {$pet.user_stature_cm} cm</li>
             <li class="list-group-item"><strong>Dirección:</strong> {$pet.user_address}</li>
-            <li class="list-group-item"><strong>Teléfono celular:</strong> {$pet.user_phone_mobile}</li>
-            <li class="list-group-item"><strong>Teléfono residencial:</strong> {$pet.user_phone_home}</li>
-            <li class="list-group-item"><strong>Teléfono del trabajo:</strong> {$pet.user_phone_work}</li>
+            <li class="list-group-item"><strong>Teléfono celular:</strong> 
+                {if $pet.user_mobile_number}
+                    <span class="phone-number">
+                        {if $pet.mobile_prefix}<span class="country-prefix">+{$pet.mobile_prefix}</span> {/if}{$pet.user_mobile_number}
+                    </span>
+                {else}No especificado{/if}
+            </li>
+            <li class="list-group-item"><strong>Teléfono residencial:</strong> 
+                {if $pet.user_home_number}
+                    <span class="phone-number">
+                        {if $pet.home_prefix}<span class="country-prefix">+{$pet.home_prefix}</span> {/if}{$pet.user_home_number}
+                    </span>
+                {else}No especificado{/if}
+            </li>
+            <li class="list-group-item"><strong>Teléfono del trabajo:</strong> 
+                {if $pet.user_work_number}
+                    <span class="phone-number">
+                        {if $pet.work_prefix}<span class="country-prefix">+{$pet.work_prefix}</span> {/if}{$pet.user_work_number}
+                    </span>
+                {else}No especificado{/if}
+            </li>
             <li class="list-group-item"><strong>Peso:</strong> {$pet.user_weight_kg} kg</li>
             <li class="list-group-item"><strong>EPS:</strong> {if $pet.user_has_eps == 1}{$pet.user_eps_name}{else}No tiene{/if}</li>
             <li class="list-group-item"><strong>Prepagada:</strong> {if $pet.user_has_prepaid == 1}{$pet.user_prepaid_name}{else}No tiene{/if}</li>
@@ -47,7 +77,12 @@
                 {foreach from=$pet.contacts item=contact}
                     <li class="list-group-item">
                         <strong>Nombre:</strong> {$contact.contact_name}<br>
-                        <strong>Teléfono:</strong> {$contact.contact_phone}<br>
+                        <strong>Teléfono:</strong> 
+                        {if $contact.contact_phone_number}
+                            <span class="phone-number">
+                                {if $contact.call_prefix}<span class="country-prefix">+{$contact.call_prefix}</span> {/if}{$contact.contact_phone_number}
+                            </span>
+                        {else}No especificado{/if}<br>
                         <strong>Email:</strong> {$contact.contact_email}<br>
                         <strong>Parentesco:</strong> {$contact.relationship}
                     </li>
@@ -121,11 +156,13 @@
             </a>
         {else}
             <p>Enviar un mensaje y compartir tu ubicación con la persona de contacto vía WhatsApp:</p>
-            <a href="https://wa.me/{$pet.contacts.0.contact_phone}?text={urlencode('Hola, he encontrado a esta persona.')}"
-                target="_blank"
-                class="btn btn-success btn-lg">
-                Enviar mensaje
-            </a>
+            {if $pet.contacts.0.contact_phone_number}
+                <a href="https://wa.me/{if $pet.contacts.0.call_prefix}{$pet.contacts.0.call_prefix}{/if}{$pet.contacts.0.contact_phone_number}?text={urlencode("Hola, he encontrado a ")}{urlencode($pet.user_name)}{urlencode(".")}"
+                    target="_blank"
+                    class="btn btn-success btn-lg">
+                    Enviar mensaje
+                </a>
+            {/if}
         {/if}
     </div>
 {else}
