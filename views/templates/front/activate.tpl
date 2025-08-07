@@ -24,14 +24,24 @@
     </div>
 {/if}
 
+{if $pet.user_image}
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img src="{$module_dir}/modules/qrsoldproducts/views/img/uploads/{$pet.user_image|escape:'url'}"
+             alt="Foto de {$pet.user_name|escape:'html'}"
+             style="
+                width: 180px;
+                height: 180px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 4px solid #dee2e6;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+             ">
+    </div>
+{/if}
+
 {if $pet}
     <div class="card mb-4">
         <div class="card-header"><h2 class="h5">Información Personal</h2></div>
-        {if $pet.user_image}
-            <div class="text-center mb-3">
-                <img src="{$module_dir}/modules/qrsoldproducts/views/img/uploads/{$pet.user_image|escape:'url'}">
-            </div>
-        {/if}
 
         <ul class="list-group list-group-flush">
             <li class="list-group-item"><strong>Nombre Completo:</strong> {$pet.user_name}</li>
