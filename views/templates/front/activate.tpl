@@ -29,9 +29,10 @@
         <div class="card-header"><h2 class="h5">Información Personal</h2></div>
         {if $pet.user_image}
             <div class="text-center mb-3">
-                <img src="{$module_dir}uploads/{$pet.user_image}" alt="Foto de {$pet.user_name}" class="img-fluid rounded" style="max-width: 200px;">
+                <img src="{$module_dir}/modules/qrsoldproducts/views/img/uploads/{$pet.user_image|escape:'url'}">
             </div>
         {/if}
+
         <ul class="list-group list-group-flush">
             <li class="list-group-item"><strong>Nombre Completo:</strong> {$pet.user_name}</li>
             <li class="list-group-item"><strong>Tipo de documento:</strong> 

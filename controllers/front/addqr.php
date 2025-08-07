@@ -48,7 +48,7 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
             return null;
         }
 
-        $upload_dir = _PS_MODULE_DIR_ . 'qrsoldproducts/uploads/';
+        $upload_dir = _PS_MODULE_DIR_ . 'qrsoldproducts/views/img/uploads/';
         if (!file_exists($upload_dir)) {
             mkdir($upload_dir, 0755, true);
         }
@@ -63,6 +63,7 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
 
         return null;
     }
+
 
     private function loadFormData()
     {
