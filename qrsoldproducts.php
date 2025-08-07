@@ -41,6 +41,12 @@ class QrSoldProducts extends Module
 
     public function uninstall()
     {
+        // Borrar imágenes de /views/img/uploads
+        $this->deleteFolderContents(_PS_MODULE_DIR_ . 'qrsoldproducts/views/img/uploads');
+
+        // Borrar imágenes de /qrs en public_html
+        $this->deleteFolderContents(_PS_MODULE_DIR_ . 'qrsoldproducts/qrs');
+
         return parent::uninstall()
             && $this->removeDatabaseTables()
             && $this->uninstallTab();
