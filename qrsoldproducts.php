@@ -52,6 +52,21 @@ class QrSoldProducts extends Module
             && $this->uninstallTab();
     }
 
+    private function deleteFolderContents($folderPath)
+    {
+        if (!file_exists($folderPath) || !is_dir($folderPath)) {
+            return;
+        }
+
+        $files = glob($folderPath . '/*');
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                @unlink($file);
+            }
+        }
+    }
+
+
     private function createDatabaseTables()
     {
         $sql = [];
