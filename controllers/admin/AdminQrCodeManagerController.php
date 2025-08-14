@@ -55,13 +55,11 @@ class AdminQrCodeManagerController extends ModuleAdminController
             ],
         ];
 
-
         $this->bulk_actions = [
             'download_selected' => [
                 'text' => $this->trans('Descargar seleccionados', [], 'Modules.Qrsoldproducts.Admin'),
                 'confirm' => $this->trans('¿Estás seguro de que deseas descargar los QRs seleccionados?', [], 'Modules.Qrsoldproducts.Admin'),
             ],
-
             'export_excel' => [
                 'text' => $this->trans('Exportar a Excel', [], 'Modules.Qrsoldproducts.Admin'),
                 'confirm' => $this->trans('¿Exportar a Excel los QRs seleccionados?', [], 'Modules.Qrsoldproducts.Admin'),
@@ -73,12 +71,14 @@ class AdminQrCodeManagerController extends ModuleAdminController
 
     public function renderList()
     {
-        // $this->toolbar_btn['new'] = [
-        //     'href' => self::$currentIndex . '&token=' . $this->token . '&generate_bulk=1',
-        //     'desc' => 'Crear QRs'
-        // ];
+        // Botón para abrir el formulario de generación masiva
+        $this->toolbar_btn['new'] = [
+            'href' => self::$currentIndex . '&token=' . $this->token . '&generate_bulk=1',
+            'desc' => $this->trans('Generar QRs', [], 'Modules.Qrsoldproducts.Admin'),
+            'icon' => 'process-icon-new',
+        ];
 
-        // Elimina acción de editar o ver detalles clickeando fila
+        // Evita navegación al hacer clic en filas
         $this->list_no_link = true;
 
         return parent::renderList();
@@ -86,7 +86,7 @@ class AdminQrCodeManagerController extends ModuleAdminController
 
     public function getList($id_lang, $order_by = null, $order_way = null, $start = 0, $limit = null, $id_lang_shop = false)
     {
-        $this->_join .= ' 
+        $this->_join .= '
             LEFT JOIN '._DB_PREFIX_.'order_detail od 
                 ON a.id_order_detail = od.id_order_detail';
 
@@ -101,8 +101,10 @@ class AdminQrCodeManagerController extends ModuleAdminController
     public function initContent()
     {
         if (Tools::getValue('generate_bulk')) {
+            // Muestra la plantilla del formulario de generación
             $this->setTemplate('generate_bulk.tpl');
         } elseif (Tools::getValue('assign_order_form')) {
+            // Formulario de asignación por pedido (si lo usas)
             $this->context->smarty->assign([
                 'id_order' => (int)Tools::getValue('assign_order_form'),
                 'token' => Tools::getAdminTokenLite('AdminQrCodeManager'),
@@ -121,35 +123,64 @@ class AdminQrCodeManagerController extends ModuleAdminController
     {
         $service = new QspQrCodeService();
 
+        // --- Generación masiva de QRs ---
         if (Tools::isSubmit('submitGenerateQr')) {
-            $files = $service->createQrs(
-                (int)Tools::getValue('bulk_qr_count'),
-                Tools::getValue('qr_prefix', ''),
-                (int)Tools::getValue('qr_size', 250)
-            );
+            try {
+                $count   = max(1, (int)Tools::getValue('bulk_qr_count', 10));
+                $prefix  = Tools::getValue('qr_prefix', '');
+                $size    = (int)Tools::getValue('qr_size', 250);
+                $margin  = (int)Tools::getValue('qr_margin', 5);
+                $version = (int)Tools::getValue('qr_version', 0); // 0 = dejar que la lib decida
 
-            if (Tools::getValue('download_zip') && count($files) > 0) {
-                $service->downloadQrs(array_map(function ($filePath) {
-                    return pathinfo($filePath, PATHINFO_FILENAME);
-                }, $files));
+                // Limpieza/saneamiento simple del prefijo (máx 3 chars, alfanumérico y guión)
+                $prefix = Tools::substr(preg_replace('/[^A-Za-z0-9\-]/', '', $prefix), 0, 3);
+
+                // Llamado flexible para soportar firmas de 3 o 5 parámetros:
+                // 1) createQrs($count, $prefix, $size, $margin, $version)
+                // 2) createQrs($count, $prefix, $size)
+                $files = [];
+                try {
+                    // Intento con 5 parámetros
+                    $files = $service->createQrs($count, $prefix, $size, $margin, $version);
+                } catch (ArgumentCountError $e) {
+                    // Fallback a firma antigua (3 parámetros)
+                    $files = $service->createQrs($count, $prefix, $size);
+                }
+
+                if (Tools::getValue('download_zip') && is_array($files) && count($files) > 0) {
+                    $service->downloadQrs(array_map(function ($filePath) {
+                        return pathinfo($filePath, PATHINFO_FILENAME);
+                    }, $files));
+                }
+
+                $this->confirmations[] = sprintf('%d %s', count($files), $this->trans('códigos QR generados correctamente.', [], 'Modules.Qrsoldproducts.Admin'));
+            } catch (PrestaShopException $e) {
+                $this->errors[] = $e->getMessage();
+            } catch (Exception $e) {
+                $this->errors[] = $e->getMessage();
             }
-
-            $this->confirmations[] = sprintf('%d códigos QR generados correctamente.', count($files));
         }
 
+        // --- Asignar QRs a un pedido ---
         if (Tools::isSubmit('submit_assign_qrs')) {
-            $order = new Order((int)Tools::getValue('id_order'));
-            $prefix = Tools::getValue('qr_prefix', '');
+            try {
+                $order  = new Order((int)Tools::getValue('id_order'));
+                $prefix = Tools::getValue('qr_prefix', '');
+                $prefix = Tools::substr(preg_replace('/[^A-Za-z0-9\-]/', '', $prefix), 0, 3);
 
-            $service->ensureQrsAssignedToOrder($order, $prefix);
+                $service->ensureQrsAssignedToOrder($order, $prefix);
 
-            Tools::redirectAdmin(Context::getContext()->link->getAdminLink('AdminOrders', true, [], [
-                'id_order' => $order->id,
-                'vieworder' => 1,
-                'conf' => 4
-            ]));
+                Tools::redirectAdmin(Context::getContext()->link->getAdminLink('AdminOrders', true, [], [
+                    'id_order' => $order->id,
+                    'vieworder' => 1,
+                    'conf' => 4
+                ]));
+            } catch (PrestaShopException $e) {
+                $this->errors[] = $this->trans('No se pudieron asignar los QRs: ', [], 'Modules.Qrsoldproducts.Admin') . $e->getMessage();
+            }
         }
 
+        // --- Descarga individual desde acción de fila ---
         if ($id = Tools::getValue('download_qr')) {
             try {
                 $service->downloadQrsByIds([(int)$id]);
@@ -158,6 +189,7 @@ class AdminQrCodeManagerController extends ModuleAdminController
             }
         }
 
+        // --- Descarga masiva desde bulk action ---
         if (Tools::isSubmit('submitBulkdownload_selectedqsp_qr_codes')) {
             try {
                 $ids = Tools::getValue('qsp_qr_codesBox', []);
@@ -165,10 +197,11 @@ class AdminQrCodeManagerController extends ModuleAdminController
                     $service->downloadQrsByIds(array_map('intval', $ids));
                 }
             } catch (PrestaShopException $e) {
-                $this->errors[] = $e->getMessage();
+                $this->errors[] = $this->trans('Error al descargar: ', [], 'Modules.Qrsoldproducts.Admin') . $e->getMessage();
             }
         }
 
+        // --- Exportar a Excel desde bulk action ---
         if (Tools::isSubmit('submitBulkexport_excelqsp_qr_codes')) {
             try {
                 $ids = Tools::getValue('qsp_qr_codesBox', []);
@@ -182,11 +215,12 @@ class AdminQrCodeManagerController extends ModuleAdminController
             }
         }
 
+        // --- Descargar ZIP de QRs por pedido (si lo usas en otra vista) ---
         if ($orderId = Tools::getValue('download_order_qrs')) {
             try {
                 $service->downloadQrsFromOrder(new Order((int)$orderId));
             } catch (PrestaShopException $e) {
-                $this->errors[] = $e->getMessage();
+                $this->errors[] = $this->trans('No se pudieron descargar los QRs del pedido: ', [], 'Modules.Qrsoldproducts.Admin') . $e->getMessage();
             }
         }
     }
@@ -194,7 +228,7 @@ class AdminQrCodeManagerController extends ModuleAdminController
     public function displayDownloadLink($token = null, $id, $name = null)
     {
         return '<a href="' . self::$currentIndex . '&token=' . $this->token . '&download_qr=' . (int)$id . '" class="btn btn-default">
-                    <i class="icon-download"></i> Descargar
+                    <i class="icon-download"></i> ' . $this->trans('Descargar', [], 'Modules.Qrsoldproducts.Admin') . '
                 </a>';
     }
 
@@ -204,7 +238,7 @@ class AdminQrCodeManagerController extends ModuleAdminController
             throw new PrestaShopException('No hay IDs para exportar.');
         }
 
-        // Obtén datos básicos: code y validation_code
+        // Datos básicos para Excel
         $in = implode(',', array_map('intval', $ids));
         $sql = 'SELECT id_qr_code, code, validation_code
                 FROM '._DB_PREFIX_.'qsp_qr_codes
@@ -215,9 +249,7 @@ class AdminQrCodeManagerController extends ModuleAdminController
             throw new PrestaShopException('No se encontraron registros para exportar.');
         }
 
-        // Construir la URL del PNG del QR.
-        // Según tu módulo, los PNG están en /modules/qrsoldproducts/qrs/{code}.png
-        // getPathUri() devuelve la URL pública del módulo.
+        // URL pública de los PNG generados por el módulo: /modules/qrsoldproducts/qrs/{code}.png
         $moduleBaseUri = $this->module->getPathUri(); // .../modules/qrsoldproducts/
         $qrBaseUri = rtrim(Context::getContext()->shop->getBaseURL(true), '/') . rtrim($moduleBaseUri, '/').'/qrs/';
 
@@ -230,7 +262,7 @@ class AdminQrCodeManagerController extends ModuleAdminController
         $sheet->setCellValue('B1', 'Código de validación');
         $sheet->setCellValue('C1', 'URL del QR');
 
-        // Contenido
+        // Filas
         $rowNum = 2;
         foreach ($rows as $r) {
             $code = (string)$r['code'];
@@ -256,7 +288,6 @@ class AdminQrCodeManagerController extends ModuleAdminController
 
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         $writer->save('php://output');
-        exit; // Importante para evitar que PrestaShop siga renderizando
+        exit;
     }
-
 }
