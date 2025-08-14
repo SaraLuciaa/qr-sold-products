@@ -152,7 +152,8 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
 
     private function isEditMode()
     {
-        return Tools::getIsset('edit_id') && (int)Tools::getValue('edit_id') > 0;
+        $editId = (int)Tools::getValue('edit_id'); // toma GET o POST
+        return $editId > 0;
     }
 
     private function normalizeCountryId($fieldName)
@@ -285,14 +286,20 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
         $editId = (int)Tools::getValue('edit_id');
         $customer = new QspCustomerCode($editId);
 
+        // primero llena datos
+        $this->fillCustomerData($customer, null, null, false);
+
+        // luego maneja imagen (si hay) y asigna al objeto
         $image_name = $this->handleImageUpload($customer->id);
         if ($image_name) {
             $customer->user_image = $image_name;
-            $customer->update();
         }
 
-        $this->fillCustomerData($customer, null, null, false);
-        $customer->update();
+        // guarda una sola vez
+        if (!$customer->update()) {
+            $this->context->smarty->assign('error', 'No se pudo actualizar el registro. Verifica los campos obligatorios.');
+            return;
+        }
 
         $this->saveContacts($editId);
         $this->saveCovidInfo($editId);
@@ -302,7 +309,7 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
 
         Tools::redirect($this->context->link->getPageLink('module-qrsoldproducts-manageqr-custom'));
     }
-
+        
     private function saveContacts($id_customer_code)
     {
         Db::getInstance()->delete('qsp_customer_contacts', 'id_customer_code = ' . (int)$id_customer_code);

@@ -18,6 +18,11 @@
 {/if}
 
 <form method="post" class="form-horizontal" enctype="multipart/form-data">
+
+    {if $edit_mode && isset($qr_data.id_customer_code)}
+        <input type="hidden" name="edit_id" value="{$qr_data.id_customer_code|escape:'html'}">
+    {/if}
+
     {if !$edit_mode}
         <div class="form-group">
             <label for="validation_code">Código de Validación *</label>
@@ -26,7 +31,7 @@
     {else}
         <div class="form-group">
             <label>Código de Validación</label>
-            <input type="text" class="form-control" value="{$qr_data.validation_code}" disabled>
+            <input type="text" class="form-control" value="{$qr_data.validation_code|escape:'html'}" disabled>
         </div>
     {/if}
 
@@ -48,10 +53,10 @@
     <div class="form-group">
         <label for="user_type_dni">Tipo de Documento *</label>
         <select name="user_type_dni" id="user_type_dni" class="form-control" required>
-            <option value="" disabled {if {$qr_data.user_type_dni|default:''|escape:'html'} == ""}selected {/if}>Selecciona una opción</option>
-            <option value="CC" {if {$qr_data.user_type_dni|default:''|escape:'html'} == "CC"}selected {/if}>Cédula de ciudadanía</option>
-            <option value="TI" {if {$qr_data.user_type_dni|default:''|escape:'html'} == "TI"}selected {/if}>Tarjeta de identidad</option>
-            <option value="CE" {if {$qr_data.user_type_dni|default:''|escape:'html'} == "CE"}selected {/if}>Cédula de extranjería</option>
+            <option value="" disabled {if $qr_data.user_type_dni|default:''|escape:'html' == ""}selected{/if}>Selecciona una opción</option>
+            <option value="CC" {if $qr_data.user_type_dni|default:''|escape:'html' == "CC"}selected{/if}>Cédula de ciudadanía</option>
+            <option value="TI" {if $qr_data.user_type_dni|default:''|escape:'html' == "TI"}selected{/if}>Tarjeta de identidad</option>
+            <option value="CE" {if $qr_data.user_type_dni|default:''|escape:'html' == "CE"}selected{/if}>Cédula de extranjería</option>
         </select>
     </div>
 
@@ -70,10 +75,10 @@
     <div class="form-group">
         <label for="user_gender">Género</label>
         <select name="user_gender" id="user_gender" class="form-control">
-            <option value="" disabled {if {$qr_data.user_gender|default:''|escape:'html'} == ""}selected {/if}>Selecciona una opción</option>
-            <option value="MASCULINO" {if {$qr_data.user_gender|default:''|escape:'html'} == "MASCULINO"}selected {/if}>Masculino</option>
-            <option value="FEMENINO" {if {$qr_data.user_gender|default:''|escape:'html'} == "FEMENINO"}selected {/if}>Femenino</option>
-            <option value="OTRO" {if {$qr_data.user_gender|default:''|escape:'html'} == "OTRO"}selected {/if}>Otro</option>
+            <option value="" disabled {if $qr_data.user_gender|default:''|escape:'html' == ""}selected{/if}>Selecciona una opción</option>
+            <option value="MASCULINO" {if $qr_data.user_gender|default:''|escape:'html' == "MASCULINO"}selected{/if}>Masculino</option>
+            <option value="FEMENINO" {if $qr_data.user_gender|default:''|escape:'html' == "FEMENINO"}selected{/if}>Femenino</option>
+            <option value="OTRO" {if $qr_data.user_gender|default:''|escape:'html' == "OTRO"}selected{/if}>Otro</option>
         </select>
     </div>
     
@@ -88,10 +93,11 @@
         <input type="text" name="user_address" id="user_address" class="form-control"
                value="{$qr_data.user_address|default:''|escape:'html'}">
     </div>
-        <div class="form-group">
-            <label for="user_mobile_country_id">Teléfono móvil</label>
+
+    <div class="form-group">
+        <label for="user_mobile_country_id">Teléfono móvil *</label>
         <div class="form-inline">
-            <select name="user_mobile_country_id" class="form-control mr-2" style="width:auto;">
+            <select name="user_mobile_country_id" class="form-control mr-2" style="width:auto;" required>
                 <option value="">— Selecciona país —</option>
                 {foreach from=$countries item=country}
                     <option value="{$country.id_country}" 
@@ -100,7 +106,7 @@
                     </option>
                 {/foreach}
             </select>
-            <input type="tel" name="user_mobile_number" class="form-control" style="width:auto;" 
+            <input type="tel" name="user_mobile_number" class="form-control" style="width:auto;" required
                 value="{$qr_data.user_mobile_number|default:''|escape:'html'}">
         </div>
     </div>
@@ -148,12 +154,12 @@
     <div class="form-group">
         <label for="user_has_eps">Tiene EPS</label>
         <select name="user_has_eps" id="user_has_eps" class="form-control">
-            <option value="0" {if {$qr_data.user_has_eps|default:0} == 0}selected {/if}>No</option>
-            <option value="1" {if {$qr_data.user_has_eps|default:0} == 1}selected {/if}>Sí</option>
+            <option value="0" {if $qr_data.user_has_eps|default:0 == 0}selected{/if}>No</option>
+            <option value="1" {if $qr_data.user_has_eps|default:0 == 1}selected{/if}>Sí</option>
         </select>
     </div>
     
-    <div id="eps_name" class="form-group" {if {$qr_data.user_has_eps|default:0} == 0}style="display: none;"{/if}>
+    <div id="eps_name" class="form-group" {if $qr_data.user_has_eps|default:0 == 0}style="display: none;"{/if}>
         <label for="user_eps_name">Nombre de la EPS</label>
         <input type="text" name="user_eps_name" id="user_eps_name" class="form-control"
                value="{$qr_data.user_eps_name|default:''|escape:'html'}">
@@ -162,12 +168,12 @@
     <div class="form-group">
         <label for="user_has_prepaid">Tiene Prepagada</label>
         <select name="user_has_prepaid" id="user_has_prepaid" class="form-control">
-            <option value="0" {if {$qr_data.user_has_prepaid|default:0} == 0}selected {/if}>No</option>
-            <option value="1" {if {$qr_data.user_has_prepaid|default:0} == 1}selected {/if}>Sí</option>
+            <option value="0" {if $qr_data.user_has_prepaid|default:0 == 0}selected{/if}>No</option>
+            <option value="1" {if $qr_data.user_has_prepaid|default:0 == 1}selected{/if}>Sí</option>
         </select>
     </div>
     
-    <div id="prepa_name" class="form-group" {if {$qr_data.user_has_prepaid|default:0} == 0}style="display: none;"{/if}>
+    <div id="prepa_name" class="form-group" {if $qr_data.user_has_prepaid|default:0 == 0}style="display: none;"{/if}>
         <label for="user_prepaid_name">Nombre de la Prepagada</label>
         <input type="text" name="user_prepaid_name" id="user_prepaid_name" class="form-control"
                value="{$qr_data.user_prepaid_name|default:''|escape:'html'}">
@@ -176,31 +182,31 @@
     <div class="form-group">
         <label for="user_blood_type">Tipo de Sangre</label>
         <select name="user_blood_type" id="user_blood_type" class="form-control">
-            <option value="" disabled {if {$qr_data.user_blood_type|default:''|escape:'html'} == ""}selected {/if}>Selecciona una opción</option>
-            <option value="O+" {if {$qr_data.user_blood_type|default:''|escape:'html'} == "O+"}selected {/if}>O+</option>
-            <option value="O-" {if {$qr_data.user_blood_type|default:''|escape:'html'} == "O-"}selected {/if}>O-</option>
-            <option value="A+" {if {$qr_data.user_blood_type|default:''|escape:'html'} == "A+"}selected {/if}>A+</option>
-            <option value="A-" {if {$qr_data.user_blood_type|default:''|escape:'html'} == "A-"}selected {/if}>A-</option>
-            <option value="B+" {if {$qr_data.user_blood_type|default:''|escape:'html'} == "B+"}selected {/if}>B+</option>
-            <option value="B-" {if {$qr_data.user_blood_type|default:''|escape:'html'} == "B-"}selected {/if}>B-</option>
-            <option value="AB+" {if {$qr_data.user_blood_type|default:''|escape:'html'} == "AB+"}selected {/if}>AB+</option>
-            <option value="AB-" {if {$qr_data.user_blood_type|default:''|escape:'html'} == "AB-"}selected {/if}>AB-</option>
+            <option value="" disabled {if $qr_data.user_blood_type|default:''|escape:'html' == ""}selected{/if}>Selecciona una opción</option>
+            <option value="O+" {if $qr_data.user_blood_type|default:''|escape:'html' == "O+"}selected{/if}>O+</option>
+            <option value="O-" {if $qr_data.user_blood_type|default:''|escape:'html' == "O-"}selected{/if}>O-</option>
+            <option value="A+" {if $qr_data.user_blood_type|default:''|escape:'html' == "A+"}selected{/if}>A+</option>
+            <option value="A-" {if $qr_data.user_blood_type|default:''|escape:'html' == "A-"}selected{/if}>A-</option>
+            <option value="B+" {if $qr_data.user_blood_type|default:''|escape:'html' == "B+"}selected{/if}>B+</option>
+            <option value="B-" {if $qr_data.user_blood_type|default:''|escape:'html' == "B-"}selected{/if}>B-</option>
+            <option value="AB+" {if $qr_data.user_blood_type|default:''|escape:'html' == "AB+"}selected{/if}>AB+</option>
+            <option value="AB-" {if $qr_data.user_blood_type|default:''|escape:'html' == "AB-"}selected{/if}>AB-</option>
         </select>
     </div>
     
     <div class="form-group">
         <label for="user_accepts_transfusions">Acepta Transfusiones</label>
         <select name="user_accepts_transfusions" id="user_accepts_transfusions" class="form-control">
-            <option value="1" {if {$qr_data.user_accepts_transfusions|default:1} == 1}selected {/if}>Sí</option>
-            <option value="0" {if {$qr_data.user_accepts_transfusions|default:1} == 0}selected {/if}>No</option>
+            <option value="1" {if $qr_data.user_accepts_transfusions|default:1 == 1}selected{/if}>Sí</option>
+            <option value="0" {if $qr_data.user_accepts_transfusions|default:1 == 0}selected{/if}>No</option>
         </select>
     </div>
     
     <div class="form-group">
         <label for="user_organ_donor">Donador de Órganos</label>
         <select name="user_organ_donor" id="user_organ_donor" class="form-control">
-            <option value="0" {if {$qr_data.user_organ_donor|default:0} == 0}selected {/if}>No</option>
-            <option value="1" {if {$qr_data.user_organ_donor|default:0} == 1}selected {/if}>Sí</option>
+            <option value="0" {if $qr_data.user_organ_donor|default:0 == 0}selected{/if}>No</option>
+            <option value="1" {if $qr_data.user_organ_donor|default:0 == 1}selected{/if}>Sí</option>
         </select>
     </div>
     
@@ -301,33 +307,51 @@
     <hr>
     
     <h2>Información de Vacunación COVID-19</h2>
-    
+
+    {assign var=is_vaccinated value=$qr_data.covid.vaccinated|default:0}
+
     <div class="form-group">
-        <label for="vaccinated">¿Está vacunado contra COVID-19?</label>
-        <select name="vaccinated" id="vaccinated" class="form-control">
-            <option value="0" {if {$qr_data.covid.vaccinated|default:0} == 0}selected {/if}>No</option>
-            <option value="1" {if {$qr_data.covid.vaccinated|default:0} == 1}selected {/if}>Sí</option>
-        </select>
+    <label for="vaccinated">¿Está vacunado contra COVID-19?</label>
+    <select name="vaccinated" id="vaccinated" class="form-control">
+        <option value="0" {if $is_vaccinated == 0}selected{/if}>No</option>
+        <option value="1" {if $is_vaccinated == 1}selected{/if}>Sí</option>
+    </select>
     </div>
-    
-    <div id="covid_details" class="form-group" {if {$qr_data.covid.vaccinated|default:0} == 0}style="display: none;"{/if}>
-        <div class="form-group">
-            <label for="doses">Número de dosis</label>
-            <input type="number" name="doses" id="doses" class="form-control" min="1" max="5"
-                   value="{$qr_data.covid.doses|default:''|escape:'html'}">
-        </div>
-        
-        <div class="form-group">
-            <label for="last_dose_date">Fecha de última dosis</label>
-            <input type="date" name="last_dose_date" id="last_dose_date" class="form-control"
-                   value="{$qr_data.covid.last_dose_date|default:''|escape:'html'}">
-        </div>
-        
-        <div class="form-group">
-            <label for="covid_notes">Notas sobre vacunación</label>
-            <textarea name="covid_notes" id="covid_notes" class="form-control" rows="2">{$qr_data.covid.notes|default:''|escape:'html'}</textarea>
-        </div>
+
+    {* visible solo si vacunado = 1 *}
+    <div id="covid_details" class="form-group" {if $is_vaccinated != 1}style="display:none;"{/if}>
+    <div class="form-group">
+        <label for="doses">Número de dosis</label>
+        <input type="number"
+            name="doses"
+            id="doses"
+            class="form-control"
+            min="1"
+            max="5"
+            {if $is_vaccinated != 1}disabled{/if}
+            value="{if $is_vaccinated == 1 && isset($qr_data.covid.doses) && $qr_data.covid.doses>0}{$qr_data.covid.doses|escape:'html'}{/if}">
     </div>
+
+    <div class="form-group">
+        <label for="last_dose_date">Fecha de última dosis</label>
+        <input type="date"
+            name="last_dose_date"
+            id="last_dose_date"
+            class="form-control"
+            {if $is_vaccinated != 1}disabled{/if}
+            value="{if $is_vaccinated == 1}{$qr_data.covid.last_dose_date|default:''|escape:'html'}{/if}">
+    </div>
+
+    <div class="form-group">
+        <label for="covid_notes">Notas sobre vacunación</label>
+        <textarea name="covid_notes"
+                id="covid_notes"
+                class="form-control"
+                rows="2"
+                {if $is_vaccinated != 1}disabled{/if}>{if $is_vaccinated == 1}{$qr_data.covid.notes|default:''|escape:'html'}{/if}</textarea>
+    </div>
+    </div>
+
 
     <hr>
     
@@ -459,24 +483,23 @@
             Agregar medicamento
         </button>
     </div>
-</div>
 
-<hr class="my-4">
+    <hr class="my-4">
 
-<!-- Botones principales con mejor separación -->
-<div class="form-actions text-center">
-    <button type="submit" name="submit_add_qr" class="btn btn-primary btn-lg px-5">
-        {if $edit_mode}
-            Guardar cambios
-        {else}
-            Registrar QR
-        {/if}
-    </button>
-    
-    <a href="{$link->getPageLink('module-qrsoldproducts-manageqr-custom')}" class="btn btn-secondary btn-lg px-5 ml-3">
-        Cancelar
-    </a>
-</div>
+    <!-- Botones principales con mejor separación -->
+    <div class="form-actions text-center">
+        <button type="submit" name="submit_add_qr" class="btn btn-primary btn-lg px-5">
+            {if $edit_mode}
+                Guardar cambios
+            {else}
+                Registrar QR
+            {/if}
+        </button>
+        
+        <a href="{$link->getPageLink('module-qrsoldproducts-manageqr-custom')}" class="btn btn-secondary btn-lg px-5 ml-3">
+            Cancelar
+        </a>
+    </div>
 </form>
 
 <style>
@@ -536,7 +559,6 @@
     border-bottom: 2px solid #dee2e6;
     padding-bottom: 0.5rem;
 }
-
 </style>
 
 <script>
@@ -557,16 +579,43 @@ document.addEventListener('DOMContentLoaded', function() {
         prepaidNameDiv.style.display = this.value == '1' ? 'block' : 'none';
     });
     
-    // Mostrar/ocultar campos de COVID
+    // Mostrar/ocultar y (des)habilitar campos de COVID
     const vaccinatedSelect = document.getElementById('vaccinated');
-    const covidDetailsDiv = document.getElementById('covid_details');
-    
-    vaccinatedSelect.addEventListener('change', function() {
-        covidDetailsDiv.style.display = this.value == '1' ? 'block' : 'none';
+    const covidDetailsDiv  = document.getElementById('covid_details');
+    const dosesEl          = document.getElementById('doses');
+    const lastDoseEl       = document.getElementById('last_dose_date');
+    const notesEl          = document.getElementById('covid_notes');
+
+    function toggleCovidFields(value) {
+    const enabled = (String(value) === '1');
+    covidDetailsDiv.style.display = enabled ? 'block' : 'none';
+
+    [dosesEl, lastDoseEl, notesEl].forEach(el => {
+        if (!el) return;
+        el.disabled = !enabled;
     });
 
+    // Si NO está vacunado: limpia valores para evitar violar min/max ocultos
+    if (!enabled) {
+        if (dosesEl) { dosesEl.value = ''; dosesEl.removeAttribute('required'); }
+        if (lastDoseEl) lastDoseEl.value = '';
+        if (notesEl) notesEl.value = '';
+    } else {
+        // Si quieres que sea obligatorio cuando sí está vacunado:
+        if (dosesEl) dosesEl.setAttribute('required', 'required');
+    }
+    }
+
+    // Estado inicial (por si viene seleccionado desde el servidor)
+    toggleCovidFields(vaccinatedSelect.value);
+
+    // Reaccionar a cambios
+    vaccinatedSelect.addEventListener('change', function () {
+    toggleCovidFields(this.value);
+    });
+
+
     // Agregar contacto de emergencia 2
-    // Mostrar el segundo contacto si no está visible
     const addContactBtn = document.getElementById('add_contact');
     const contact2 = document.getElementById('contact_item_1');
 
@@ -577,7 +626,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    
     // Agregar condición médica
     document.getElementById('add_condition').addEventListener('click', function() {
         const container = document.getElementById('conditions_container');
