@@ -19,41 +19,66 @@ class AdminQrCodeManagerController extends ModuleAdminController
         parent::__construct();
 
         $this->fields_list = [
-            'id_qr_code' => [
-                'title' => 'ID',
-                'align' => 'center',
-                'class' => 'fixed-width-xs',
+        'id_qr_code' => [
+            'title' => 'ID',
+            'align' => 'center',
+            'class' => 'fixed-width-xs',
+            'type' => 'int',
+            'filter_key' => 'a!id_qr_code',
+            'order_key'  => 'a!id_qr_code',
+        ],
+        'code' => [
+            'title' => 'Código QR',
+            'type' => 'text',
+            'filter_key' => 'a!code',
+            'order_key'  => 'a!code',
+        ],
+        'validation_code' => [
+            'title' => 'Código de validación',
+            'type' => 'text',
+            'filter_key' => 'a!validation_code',
+            'order_key'  => 'a!validation_code',
+        ],
+        'status' => [
+            'title'      => 'Estado',
+            'type'       => 'select',
+            'list'       => [
+                'SIN_ASIGNAR' => 'SIN ASIGNAR',
+                'SIN_ACTIVAR' => 'SIN ACTIVAR',
+                'ACTIVO'      => 'ACTIVO',
             ],
-            'code' => [ 'title' => 'Código QR' ],
-            'validation_code' => [ 'title' => 'Código de validación' ],
-            'status' => [
-                'title' => 'Estado',
-                'type' => 'select',
-                'list' => [
-                    ['id' => 'SIN_ASIGNAR', 'name' => 'SIN ASIGNAR'],
-                    ['id' => 'SIN_ACTIVAR', 'name' => 'SIN ACTIVO'],
-                    ['id' => 'ACTIVO', 'name' => 'ACTIVO'],
-                ],
-                'filter_key' => 'a!status',
-                'order_key' => 'a!status',
-            ],
-            'date_created' => [
-                'title' => 'Fecha creación',
-                'type' => 'datetime',
-            ],
-            'date_assigned' => [
-                'title' => 'Fecha asignación',
-                'type' => 'datetime',
-            ],
-            'id_order' => [
-                'title' => 'ID Pedido',
-                'align' => 'center',
-            ],
-            'id_product' => [
-                'title' => 'ID Producto',
-                'align' => 'center',
-            ],
-        ];
+            'filter_key' => 'a!status',
+            'order_key'  => 'a!status',
+            'callback'         => 'renderStatus',
+            'callback_object'  => $this,
+        ],
+        'date_created' => [
+            'title'      => 'Fecha creación',
+            'type'       => 'datetime',
+            'filter_key' => 'a!date_created',
+            'order_key'  => 'a!date_created',
+        ],
+        'date_assigned' => [
+            'title'      => 'Fecha asignación',
+            'type'       => 'datetime',
+            'filter_key' => 'a!date_assigned',
+            'order_key'  => 'a!date_assigned',
+        ],
+        'id_order' => [
+            'title'      => 'ID Pedido',
+            'align'      => 'center',
+            'type'       => 'int',
+            'filter_key' => 'od!id_order',
+            'order_key'  => 'od!id_order',
+        ],
+        'id_product' => [
+            'title'      => 'ID Producto',
+            'align'      => 'center',
+            'type'       => 'int',
+            'filter_key' => 'od!product_id',   
+            'order_key'  => 'od!product_id',
+        ],
+    ];
 
         $this->bulk_actions = [
             'download_selected' => [
@@ -69,19 +94,14 @@ class AdminQrCodeManagerController extends ModuleAdminController
         $this->addRowAction('download');
     }
 
-    public function renderList()
+    public function renderStatus($value, $row)
     {
-        // Botón para abrir el formulario de generación masiva
-        $this->toolbar_btn['new'] = [
-            'href' => self::$currentIndex . '&token=' . $this->token . '&generate_bulk=1',
-            'desc' => $this->trans('Generar QRs', [], 'Modules.Qrsoldproducts.Admin'),
-            'icon' => 'process-icon-new',
+        static $labels = [
+            'SIN_ASIGNAR' => 'SIN ASIGNAR',
+            'SIN_ACTIVAR' => 'SIN ACTIVAR',
+            'ACTIVO'      => 'ACTIVO',
         ];
-
-        // Evita navegación al hacer clic en filas
-        $this->list_no_link = true;
-
-        return parent::renderList();
+        return isset($labels[$value]) ? $labels[$value] : $value;
     }
 
     public function getList($id_lang, $order_by = null, $order_way = null, $start = 0, $limit = null, $id_lang_shop = false)
@@ -96,6 +116,21 @@ class AdminQrCodeManagerController extends ModuleAdminController
             od.product_id AS id_product';
 
         parent::getList($id_lang, $order_by, $order_way, $start, $limit, $id_lang_shop);
+    }
+
+    public function renderList()
+    {
+        // Botón para abrir el formulario de generación masiva
+        $this->toolbar_btn['new'] = [
+            'href' => self::$currentIndex . '&token=' . $this->token . '&generate_bulk=1',
+            'desc' => $this->trans('Generar QRs', [], 'Modules.Qrsoldproducts.Admin'),
+            'icon' => 'process-icon-new',
+        ];
+
+        // Evita navegación al hacer clic en filas
+        $this->list_no_link = true;
+
+        return parent::renderList();
     }
 
     public function initContent()
@@ -121,6 +156,8 @@ class AdminQrCodeManagerController extends ModuleAdminController
 
     public function postProcess()
     {
+        parent::postProcess();
+
         $service = new QspQrCodeService();
 
         // --- Generación masiva de QRs ---
