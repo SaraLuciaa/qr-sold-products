@@ -16,15 +16,22 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
         $this->setTemplate('module:qrsoldproducts/views/templates/front/addqr.tpl');
     }
 
+
     public function postProcess()
     {
+        error_log("DEBUG: postProcess ejecutado - submit_add_qr: " . (Tools::isSubmit('submit_add_qr') ? 'SÍ' : 'NO'));
+        
         if (Tools::isSubmit('submit_add_qr')) {
+            error_log("DEBUG: Formulario enviado");
             if ($this->validateForm()) {
+                error_log("DEBUG: Validación exitosa");
                 if ($this->isEditMode()) {
                     $this->updateCustomerData();
                 } else {
                     $this->insertCustomerData();
                 }
+            } else {
+                error_log("DEBUG: Validación falló");
             }
         }
     }

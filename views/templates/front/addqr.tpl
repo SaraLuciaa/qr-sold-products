@@ -280,7 +280,7 @@
             <h4>Contacto de Emergencia 2</h4>
             <div class="form-group">
                 <label for="contact_name_1">Nombre Completo *</label>
-                <input type="text" name="contact_name[]" id="contact_name_1" class="form-control" required
+                <input type="text" name="contact_name[]" id="contact_name_1" class="form-control"
                        value="{$qr_data.contacts.1.contact_name|default:''|escape:'html'}">
             </div>
 
@@ -302,7 +302,7 @@
                 
                 <label for="contact_phone_wp_1">WhatsApp</label>
                 <div class="form-inline">
-                    <select name="contact_country_id_wp[]" class="form-control mr-2" style="width:auto;" required>
+                    <select name="contact_country_id_wp[]" class="form-control mr-2" style="width:auto;">
                         <option value="">— Selecciona país —</option>
                         {foreach from=$countries item=country}
                             <option value="{$country.id_country}" 
@@ -312,7 +312,7 @@
                         {/foreach}
                     </select>
                     <input type="tel" name="contact_phone_number_wp[]" id="contact_phone_wp_1" class="form-control" style="width:auto;"
-                        required value="{$qr_data.contacts.1.contact_phone_number_wp|default:''|escape:'html'}">
+                        value="{$qr_data.contacts.1.contact_phone_number_wp|default:''|escape:'html'}">
                 </div>
 
             </div>
