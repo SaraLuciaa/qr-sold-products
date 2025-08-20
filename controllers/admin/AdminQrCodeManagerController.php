@@ -174,34 +174,26 @@ class AdminQrCodeManagerController extends ModuleAdminController
         // --- Generación masiva de QRs ---
         if (Tools::isSubmit('submitGenerateQr')) {
             try {
-                $count   = max(1, (int)Tools::getValue('bulk_qr_count', 10));
-                $prefix  = Tools::getValue('qr_prefix', '');
-                $size    = (int)Tools::getValue('qr_size', 250);
-                $margin  = (int)Tools::getValue('qr_margin', 5);
-                $version = (int)Tools::getValue('qr_version', 0); // 0 = dejar que la lib decida
+                $count  = max(1, (int)Tools::getValue('bulk_qr_count', 10));
+                $prefix = Tools::getValue('qr_prefix', '');
 
-                // Limpieza/saneamiento simple del prefijo (máx 3 chars, alfanumérico y guión)
+                // Sanea prefijo: solo A-Z, 0-9 y '-', máx 3 chars
                 $prefix = Tools::substr(preg_replace('/[^A-Za-z0-9\-]/', '', $prefix), 0, 3);
 
-                // Llamado flexible para soportar firmas de 3 o 5 parámetros:
-                // 1) createQrs($count, $prefix, $size, $margin, $version)
-                // 2) createQrs($count, $prefix, $size)
                 $files = [];
                 try {
-                    // Intento con 5 parámetros
-                    $files = $service->createQrs($count, $prefix, $size, $margin, $version);
+                    // Preferido: firma (count, prefix)
+                    $files = $service->createQrs($count, $prefix);
                 } catch (ArgumentCountError $e) {
-                    // Fallback a firma antigua (3 parámetros)
-                    $files = $service->createQrs($count, $prefix, $size);
+                    // Compatibilidad: si tu servicio aún requiere tamaño, usa 250 por defecto
+                    $files = $service->createQrs($count, $prefix, 250);
                 }
 
-                if (Tools::getValue('download_zip') && is_array($files) && count($files) > 0) {
-                    $service->downloadQrs(array_map(function ($filePath) {
-                        return pathinfo($filePath, PATHINFO_FILENAME);
-                    }, $files));
-                }
-
-                $this->confirmations[] = sprintf('%d %s', count($files), $this->trans('códigos QR generados correctamente.', [], 'Modules.Qrsoldproducts.Admin'));
+                $this->confirmations[] = sprintf(
+                    '%d %s',
+                    is_array($files) ? count($files) : (int)$count,
+                    $this->trans('códigos QR generados correctamente.', [], 'Modules.Qrsoldproducts.Admin')
+                );
             } catch (PrestaShopException $e) {
                 $this->errors[] = $e->getMessage();
             } catch (Exception $e) {

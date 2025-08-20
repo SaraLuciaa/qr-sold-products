@@ -2,10 +2,16 @@
 
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
+use chillerlan\QRCode\Data\QRMatrix;
+use chillerlan\QRCode\Common\EccLevel;
+use ZipArchive;
 
 class QspQrCodeService
 {
     private string $qrDir;
+    private int $codeLen   = 8;
+    private int $qrVersion = 1;            
+    private int $eccLevel  = EccLevel::L;  
 
     public function __construct()
     {
@@ -15,14 +21,17 @@ class QspQrCodeService
         }
     }
 
-    public function createQrs(int $count, string $prefix = '', int $size = 250): array
+    public function createQrs(int $count, string $prefix = '', int $scalePxPerModule = 5): array
     {
         $created = [];
+        $prefix  = strtoupper(trim($prefix));
 
         for ($i = 0; $i < $count; $i++) {
-            $code = strtoupper($prefix . Tools::passwdGen(10 - strlen($prefix)));
+            $code = $this->generateUniqueCode($prefix, $this->codeLen);
+
             $validation = strtoupper(Tools::passwdGen(12));
-            $url = Context::getContext()->shop->getBaseURL(true) . 'ei?code=' . $code;
+
+            $payload = $this->buildCompactPayload($code);
 
             $qr = new QspQrCode();
             $qr->code = $code;
@@ -31,8 +40,8 @@ class QspQrCodeService
             $qr->date_created = date('Y-m-d H:i:s');
             $qr->add();
 
-            $options = $this->getQrOptions(QRCode::VERSION_AUTO, $size, 5);
-            $imageData = (new QRCode($options))->render($url);
+            $options   = $this->getQrOptions($this->eccLevel, $scalePxPerModule, 4);
+            $imageData = (new QRCode($options))->render($payload);
 
             $filePath = $this->qrDir . $code . '.png';
             file_put_contents($filePath, $imageData);
@@ -42,95 +51,74 @@ class QspQrCodeService
         return $created;
     }
 
-    public function assignQrsToOrder(Order $order, array $qrCodes = [], array $filteredDetails = []): void
+    private function buildCompactPayload(string $code): string
     {
-        $orderDetails = $filteredDetails ?: $order->getOrderDetailList();
-        $db = Db::getInstance();
-        $qrIndex = 0;
-
-        foreach ($orderDetails as $detail) {
-            $qty = (int)$detail['product_quantity'];
-            $idOrderDetail = (int)$detail['id_order_detail'];
-
-            if (($qrIndex + $qty) > count($qrCodes)) {
-                PrestaShopLogger::addLog("No hay suficientes QRs para el pedido #{$order->id}", 3);
-                break;
-            }
-
-            for ($i = 0; $i < $qty; $i++) {
-                $db->update('qsp_qr_codes', [
-                    'status' => 'SIN_ACTIVAR',
-                    'id_order_detail' => $idOrderDetail,
-                    'date_assigned' => date('Y-m-d H:i:s')
-                ], 'id_qr_code = ' . (int)$qrCodes[$qrIndex++]['id_qr_code']);
-            }
-        }
+        $base = Context::getContext()->shop->getBaseURL(true);
+        $base = preg_replace('#^https?://#i', '', $base);   
+        $base = rtrim($base, '/');                       
+        return $base . '/ei?code=' . $code;
     }
 
-    public function createAndAssingQrsToOrder(Order $order, int $totalQtyUnused, string $prefix = '', int $size = 250): void
+    private function generateUniqueCode(string $prefix, int $len): string
     {
         $db = Db::getInstance();
-        $orderDetails = $order->getOrderDetailList();
+        $prefix = strtoupper($prefix);
 
-        // 1) Filtrar líneas del pedido que requieren QR
-        $eligibleDetails = [];
-        foreach ($orderDetails as $detail) {
-            $idProduct = (int)$detail['product_id'];
-            $hasQr = (bool)$db->getValue(
-                'SELECT has_qr FROM `'._DB_PREFIX_.'qsp_product_qr_config` WHERE id_product='.(int)$idProduct
-            );
-            if ($hasQr) {
-                $eligibleDetails[] = $detail;
+        if (mb_strlen($prefix) >= $len) {
+            $prefix = mb_substr($prefix, 0, $len);
+        }
+
+        $randomLen = $len - mb_strlen($prefix);
+
+        for ($tries = 0; $tries < 20; $tries++) {
+            $rand = $this->randomAlphaNum($randomLen);
+            $code = $prefix . $rand;
+
+            $exists = (int)$db->getValue('
+                SELECT COUNT(*) FROM `'._DB_PREFIX_.'qsp_qr_codes` WHERE code = "'.pSQL($code).'"
+            ');
+
+            if ($exists === 0) {
+                return $code;
             }
         }
 
-        // 2) Cantidad total requerida
-        $totalQty = array_reduce($eligibleDetails, fn($sum, $d) => $sum + (int)$d['product_quantity'], 0);
-
-        if ($totalQty === 0) {
-            PrestaShopLogger::addLog("Pedido #{$order->id} sin productos con QR configurado. No se asignan códigos.", 1);
-            return;
-        }
-
-        // 3) Verificar cuántos QRs SIN_ASIGNAR hay disponibles
-        $availableCount = (int)$db->getValue('
-            SELECT COUNT(*) FROM `'._DB_PREFIX_.'qsp_qr_codes`
-            WHERE status="SIN_ASIGNAR"
-        ');
-
-        // 4) Si faltan, crear solo los necesarios
-        if ($availableCount < $totalQty) {
-            $toCreate = $totalQty - $availableCount;
-            PrestaShopLogger::addLog("Faltan {$toCreate} QRs para el pedido #{$order->id}. Creando los faltantes…", 1);
-            $this->createQrs($toCreate, $prefix, $size);
-        }
-
-        // 5) Tomar exactamente los requeridos y asignar
-        $qrCodes = $db->executeS('
-            SELECT id_qr_code 
-            FROM `'._DB_PREFIX_.'qsp_qr_codes`
-            WHERE status="SIN_ASIGNAR"
-            ORDER BY date_created ASC
-            LIMIT '.(int)$totalQty
-        );
-
-        if (!$qrCodes || (int)count($qrCodes) < $totalQty) {
-            // Defensa adicional: si por alguna razón aún no hay suficientes
-            throw new PrestaShopException('No hay suficientes QRs disponibles para asignar al pedido.');
-        }
-
-        $this->assignQrsToOrder($order, $qrCodes, $eligibleDetails);
+        return $this->generateUniqueCode($prefix, $len + 1);
     }
 
+    private function randomAlphaNum(int $n): string
+    {
+        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $out = '';
+        for ($i = 0; $i < $n; $i++) {
+            $out .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+        }
+        return $out;
+    }
+
+    private function getQrOptions(int $eccLevel, int $scalePxPerModule, int $quietzoneModules): QROptions
+    {
+        return new QROptions([
+            'version'       => QRCode::VERSION_AUTO,  
+            'eccLevel'      => $eccLevel,            
+            'outputType'    => QRCode::OUTPUT_IMAGE_PNG,
+            'scale'         => max(1, $scalePxPerModule),
+            'imageBase64'   => false,
+            'addQuietzone'  => true,
+            'quietzoneSize' => max(1, $quietzoneModules),
+        ]);
+    }
+
+    /**
+     * Asignación manual de QRs seleccionados a un pedido.
+     */
     public function assignManualQrsToOrder(Order $order, array $qrIds): void
     {
         if (empty($qrIds)) {
             throw new PrestaShopException('No seleccionaste QRs.');
         }
 
-        $db = Db::getInstance();
-
-        // Filtra y asegura que existan y estén SIN_ASIGNAR
+        $db  = Db::getInstance();
         $ids = array_map('intval', $qrIds);
         $in  = implode(',', $ids);
 
@@ -149,8 +137,8 @@ class QspQrCodeService
             }
         }
 
-        // Solo cuenta productos marcados con QR
-        $orderDetails = $order->getOrderDetailList();
+        // Solo líneas con QR habilitado
+        $orderDetails    = $order->getOrderDetailList();
         $eligibleDetails = [];
         foreach ($orderDetails as $d) {
             $hasQr = (bool)$db->getValue(
@@ -160,13 +148,11 @@ class QspQrCodeService
                 $eligibleDetails[] = $d;
             }
         }
-
         if (empty($eligibleDetails)) {
             throw new PrestaShopException('Este pedido no tiene productos configurados con QR.');
         }
 
         $totalRequired = array_reduce($eligibleDetails, fn($s,$d)=>$s+(int)$d['product_quantity'], 0);
-
         if (count($ids) !== $totalRequired) {
             throw new PrestaShopException(sprintf(
                 'Debes asignar exactamente %d QRs (seleccionados: %d).',
@@ -174,24 +160,22 @@ class QspQrCodeService
             ));
         }
 
-        // Asignación (transacción recomendada)
+        // Transacción
         $db->execute('START TRANSACTION');
-
         try {
             $idx = 0;
             foreach ($eligibleDetails as $d) {
                 $qty = (int)$d['product_quantity'];
                 $idOrderDetail = (int)$d['id_order_detail'];
 
-                for ($i=0; $i<$qty; $i++) {
+                for ($i = 0; $i < $qty; $i++) {
                     $db->update('qsp_qr_codes', [
-                        'status' => 'SIN_ACTIVAR',
+                        'status'          => 'SIN_ACTIVAR',
                         'id_order_detail' => $idOrderDetail,
-                        'date_assigned' => date('Y-m-d H:i:s'),
+                        'date_assigned'   => date('Y-m-d H:i:s'),
                     ], 'id_qr_code='.(int)$ids[$idx++]);
                 }
             }
-
             $db->execute('COMMIT');
         } catch (Exception $e) {
             $db->execute('ROLLBACK');
@@ -207,7 +191,6 @@ class QspQrCodeService
         }
 
         if (!$this->orderHasAssignedQrs($order)) {
-            // Ahora solo creará si faltan; si hay suficientes, simplemente asigna
             $this->createAndAssingQrsToOrder($order, 0, $prefix, $size);
             PrestaShopLogger::addLog("QRs asignados (y creados solo si faltaban) para el pedido #{$order->id}", 1);
         }
@@ -216,7 +199,6 @@ class QspQrCodeService
     public function downloadQrs(array $codes): void
     {
         $files = [];
-
         foreach ($codes as $code) {
             $filePath = $this->qrDir . $code . '.png';
             if (file_exists($filePath)) {
@@ -232,7 +214,7 @@ class QspQrCodeService
             exit;
         } elseif (count($files) > 1) {
             $zipName = $this->qrDir . 'qr_lote_' . time() . '.zip';
-            $zip = new ZipArchive();
+            $zip     = new ZipArchive();
 
             if ($zip->open($zipName, ZipArchive::CREATE) === true) {
                 foreach ($files as $file) {
@@ -244,9 +226,13 @@ class QspQrCodeService
                 header('Content-Disposition: attachment; filename="' . basename($zipName) . '"');
                 header('Content-Length: ' . filesize($zipName));
                 readfile($zipName);
-                unlink($zipName);
+                @unlink($zipName);
                 exit;
+            } else {
+                throw new PrestaShopException('No se pudo crear el ZIP (ext-zip instalada?).');
             }
+        } else {
+            throw new PrestaShopException('No hay archivos para descargar.');
         }
     }
 
@@ -259,7 +245,6 @@ class QspQrCodeService
                 WHERE id_order = ' . (int)$order->id . '
             )
         ');
-
         if ($codes && count($codes)) {
             $this->downloadQrs(array_column($codes, 'code'));
         } else {
@@ -270,14 +255,12 @@ class QspQrCodeService
     public function downloadQrsByIds(array $ids): void
     {
         $codes = [];
-
         foreach ($ids as $id) {
             $qr = new QspQrCode((int)$id);
             if (Validate::isLoadedObject($qr)) {
                 $codes[] = $qr->code;
             }
         }
-
         if (!empty($codes)) {
             $this->downloadQrs($codes);
         } else {
@@ -294,7 +277,6 @@ class QspQrCodeService
                 WHERE id_order = ' . (int)$order->id . '
             ) AND status IN ("SIN_ACTIVAR", "ACTIVO")
         ');
-
         return (int)$result > 0;
     }
 
@@ -303,23 +285,13 @@ class QspQrCodeService
         $db = Db::getInstance();
         foreach ($order->getOrderDetailList() as $detail) {
             $idProduct = (int)$detail['product_id'];
-            $hasQr = (bool) $db->getValue('SELECT has_qr FROM `'._DB_PREFIX_.'qsp_product_qr_config` WHERE id_product = '.(int)$idProduct);
+            $hasQr = (bool)$db->getValue(
+                'SELECT has_qr FROM `'._DB_PREFIX_.'qsp_product_qr_config` WHERE id_product = '.(int)$idProduct
+            );
             if ($hasQr) {
                 return true;
             }
         }
         return false;
-    }
-
-    private function getQrOptions($version, $size, $margin): QROptions
-    {
-        return new QROptions([
-            'version' => $version,
-            'eccLevel' => QRCode::ECC_H,
-            'outputType' => QRCode::OUTPUT_IMAGE_PNG,
-            'scale' => (int)($size / 25),
-            'quietzoneSize' => $margin,   
-            'imageBase64' => false,
-        ]);
     }
 }
