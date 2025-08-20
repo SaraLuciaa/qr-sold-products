@@ -147,6 +147,37 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
             }
         }
 
+        // >>> Validación específica de Contacto 1 (WhatsApp obligatorio)
+        $names             = Tools::getValue('contact_name', []);
+        $country_ids_wp    = Tools::getValue('contact_country_id_wp', []);
+        $phones_wp         = Tools::getValue('contact_phone_number_wp', []);
+
+        // Debe existir Contacto 1 y su WhatsApp
+        if (!isset($names[0]) || trim($names[0]) === '') {
+            $this->context->smarty->assign('error', 'Debes registrar al menos un contacto de emergencia.');
+            return false;
+        }
+        if (!isset($country_ids_wp[0]) || (int)$country_ids_wp[0] <= 0) {
+            $this->context->smarty->assign('error', 'Selecciona el país de WhatsApp para el primer contacto.');
+            return false;
+        }
+        if (!isset($phones_wp[0]) || trim($phones_wp[0]) === '') {
+            $this->context->smarty->assign('error', 'Ingresa el número de WhatsApp para el primer contacto.');
+            return false;
+        }
+
+        // (Opcional) Si se diligencia el Contacto 2, validar también su WhatsApp
+        if (isset($names[1]) && trim($names[1]) !== '') {
+            if (!isset($country_ids_wp[1]) || (int)$country_ids_wp[1] <= 0) {
+                $this->context->smarty->assign('error', 'Selecciona el país de WhatsApp para el segundo contacto.');
+                return false;
+            }
+            if (!isset($phones_wp[1]) || trim($phones_wp[1]) === '') {
+                $this->context->smarty->assign('error', 'Ingresa el número de WhatsApp para el segundo contacto.');
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -314,25 +345,52 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
     {
         Db::getInstance()->delete('qsp_customer_contacts', 'id_customer_code = ' . (int)$id_customer_code);
 
-        $names = Tools::getValue('contact_name', []);
-        $phones = Tools::getValue('contact_phone', []);
-        $emails = Tools::getValue('contact_email', []);
-        $relations = Tools::getValue('contact_relationship', []);
-        $country_ids = Tools::getValue('contact_country_id', []);
+        $names          = (array) Tools::getValue('contact_name', []);
+        $phones         = (array) Tools::getValue('contact_phone', []);
+        $emails         = (array) Tools::getValue('contact_email', []);
+        $relations      = (array) Tools::getValue('contact_relationship', []);
+        $country_ids    = (array) Tools::getValue('contact_country_id', []);
+        $country_ids_wp = (array) Tools::getValue('contact_country_id_wp', []);
+        $phones_wp      = (array) Tools::getValue('contact_phone_number_wp', []);
 
-        foreach ($names as $index => $name) {
-            if (empty($name)) {
-                continue;
+        $max = max(count($names), count($phones), count($emails), count($relations), count($country_ids), count($country_ids_wp), count($phones_wp));
+
+        for ($i = 0; $i < $max; $i++) {
+            $name = isset($names[$i]) ? trim((string)$names[$i]) : '';
+            if ($i === 0 && $name === '') { // contacto 1 requerido
+                $this->context->smarty->assign('error', 'Debes registrar al menos un contacto de emergencia.');
+                return;
+            }
+            if ($i > 0 && $name === '') continue;
+
+            $phone     = isset($phones[$i]) ? trim((string)$phones[$i]) : '';
+            $email     = isset($emails[$i]) ? trim((string)$emails[$i]) : '';
+            $relation  = isset($relations[$i]) ? trim((string)$relations[$i]) : '';
+            $idCountry = isset($country_ids[$i]) ? (int)$country_ids[$i] : 0;
+
+            $idCountryWp = isset($country_ids_wp[$i]) ? (int)$country_ids_wp[$i] : 0;
+            $rawWp       = isset($phones_wp[$i]) ? (string)$phones_wp[$i] : '';
+            $wpDigits    = preg_replace('/\D+/', '', $rawWp); // SOLO dígitos (igual que móvil)
+
+            if ($idCountryWp <= 0 || $wpDigits === '') {
+                if ($i === 0) {
+                    $this->context->smarty->assign('error', 'Completa país y número de WhatsApp del primer contacto.');
+                    return;
+                } else {
+                    continue;
+                }
             }
 
             Db::getInstance()->insert('qsp_customer_contacts', [
-                'id_customer_code' => (int)$id_customer_code,
-                'contact_index' => (int)$index,
-                'contact_name' => pSQL($name),
-                'contact_phone_number' => pSQL($phones[$index]),
-                'contact_email' => pSQL($emails[$index]),
-                'relationship' => pSQL($relations[$index]),
-                'contact_country_id' => (int)($country_ids[$index] ?? 0),
+                'id_customer_code'        => (int)$id_customer_code,
+                'contact_index'           => (int)$i,
+                'contact_name'            => pSQL($name),
+                'contact_phone_number'    => pSQL($phone),
+                'contact_email'           => pSQL($email),
+                'relationship'            => pSQL($relation),
+                'contact_country_id'      => (int)$idCountry,
+                'contact_country_id_wp'   => (int)$idCountryWp,
+                'contact_phone_number_wp' => pSQL($wpDigits), // ← número sin prefijo
             ]);
         }
     }

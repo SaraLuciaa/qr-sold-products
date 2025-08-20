@@ -230,11 +230,10 @@
             </div>
 
             <div class="form-group">
-                <label for="contact_phone_0">Teléfono</label>
+                <label for="contact_phone_0">Teléfono principal</label>
                 <div class="form-inline">
                     <select name="contact_country_id[]" class="form-control mr-2" style="width:auto;">
                         <option value="">— Selecciona país —</option>
-
                         {foreach from=$countries item=country}
                             <option value="{$country.id_country}" 
                                 {if $qr_data.contacts.0.contact_country_id == $country.id_country}selected{/if}>
@@ -245,6 +244,22 @@
                     <input type="tel" name="contact_phone[]" id="contact_phone_0" class="form-control" style="width:auto;"
                            value="{$qr_data.contacts.0.contact_phone_number|default:''|escape:'html'}">
                 </div>
+                
+                <label for="contact_phone_wp_0">WhatsApp</label>
+                <div class="form-inline">
+                    <select name="contact_country_id_wp[]" class="form-control mr-2" style="width:auto;" required>
+                        <option value="">— Selecciona país —</option>
+                        {foreach from=$countries item=country}
+                            <option value="{$country.id_country}" 
+                                {if $qr_data.contacts.0.contact_country_id_wp == $country.id_country}selected{/if}>
+                                +{$country.call_prefix} ({$country.name})
+                            </option>
+                        {/foreach}
+                    </select>
+                    <input type="tel" name="contact_phone_number_wp[]" id="contact_phone_wp_0" class="form-control" style="width:auto;"
+                        required value="{$qr_data.contacts.0.contact_phone_number_wp|default:''|escape:'html'}">
+                </div>
+
             </div>
 
             <div class="form-group">
@@ -281,9 +296,29 @@
                             </option>
                         {/foreach}
                     </select>
-                    <input type="tel" name="contact_phone[]" id="contact_phone_1" class="form-control" style="width:auto;"
-                           value="{$qr_data.contacts.1.contact_phone_number|default:''|escape:'html'}">
+                           value="{$qr_data.contacts.1.contact_phone_number|default:''|escape:'html'}">                    <input type="tel" name="contact_phone[]" id="contact_phone_1" class="form-control" style="width:auto;"
+
                 </div>
+
+                <label for="contact_phone_wp_1" class="mt-2">WhatsApp</label>
+                <div class="form-inline">
+                    <select name="contact_country_id_wp[]" class="form-control mr-2" style="width:auto;">
+                        <option value="">— Selecciona país —</option>
+                        {foreach from=$countries item=country}
+                            <option value="{$country.id_country}"
+                                {if $qr_data.contacts.1.contact_country_id_wp == $country.id_country}selected{/if}>
+                                +{$country.call_prefix} ({$country.name})
+                            </option>
+                        {/foreach}
+                    </select>
+                    <input type="tel"
+                        name="contact_phone_number_wp[]"
+                        id="contact_phone_wp_1"
+                        class="form-control"
+                        style="width:auto;"
+                        value="{$qr_data.contacts.1.contact_phone_number_wp|default:''|escape:'html'}">
+                </div>
+
             </div>
             <div class="form-group">
                 <label for="contact_email_1">Correo electrónico</label>

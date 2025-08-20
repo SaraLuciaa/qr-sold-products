@@ -131,12 +131,16 @@ class QrSoldProducts extends Module
             `contact_country_id` INT UNSIGNED NOT NULL,
             `contact_phone_number` VARCHAR(20) NOT NULL,
 
+            `contact_country_id_wp` INT UNSIGNED NOT NULL,
+            `contact_phone_number_wp` VARCHAR(20) NOT NULL,
+
             `contact_email` VARCHAR(128) DEFAULT NULL,
             `relationship` VARCHAR(128) DEFAULT NULL,
             PRIMARY KEY (`id_contact`),
             UNIQUE KEY `uniq_contact_slot` (`id_customer_code`,`contact_index`),
             FOREIGN KEY (`id_customer_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_customer_codes`(`id_customer_code`) ON DELETE CASCADE,
-            FOREIGN KEY (`contact_country_id`) REFERENCES `' . _DB_PREFIX_ . 'country`(`id_country`)
+            FOREIGN KEY (`contact_country_id`) REFERENCES `' . _DB_PREFIX_ . 'country`(`id_country`),
+            FOREIGN KEY (`contact_country_id_wp`) REFERENCES `' . _DB_PREFIX_ . 'country`(`id_country`)
         ) ENGINE=' . _MYSQL_ENGINE_ . '';
 
         $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'qsp_customer_covid_vaccine` (
