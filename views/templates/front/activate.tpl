@@ -95,11 +95,21 @@
                     <li class="list-group-item">
                         <strong>Nombre:</strong> {$contact.contact_name}<br>
                         <strong>Teléfono:</strong> 
-                        {if $contact.contact_phone_number}
-                            <span class="phone-number">
-                                {if $contact.call_prefix}<span class="country-prefix">+{$contact.call_prefix}</span> {/if}{$contact.contact_phone_number}
-                            </span>
-                        {else}No especificado{/if}<br>
+                            {if $contact.contact_phone_number}
+                                <span class="phone-number">
+                                    {if $contact.call_prefix}<span class="country-prefix">+{$contact.call_prefix}</span> {/if}{$contact.contact_phone_number}
+                                </span>
+                            {else}No especificado{/if}<br>
+                        <strong>WhatsApp:</strong>
+                            {if $contact.contact_phone_number_wp}
+                                <span class="phone-number">
+                                    {if $contact.call_prefix_wp}<span class="country-prefix">+{$contact.call_prefix_wp}</span> {/if}{$contact.contact_phone_number_wp}
+                                </span>
+                                <a href="https://wa.me/{if $contact.call_prefix_wp}{$contact.call_prefix_wp}{/if}{$contact.contact_phone_number_wp}" target="_blank" class="btn btn-success btn-sm" style="margin-left:8px;">
+                                    Enviar WhatsApp
+                                </a>
+
+                            {else}No especificado{/if}<br>
                         <strong>Email:</strong> {$contact.contact_email}<br>
                         <strong>Parentesco:</strong> {$contact.relationship}
                     </li>

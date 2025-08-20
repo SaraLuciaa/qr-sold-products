@@ -69,14 +69,23 @@ class QrsoldproductsActivateModuleFrontController extends ModuleFrontController
 
             // Cargar datos adicionales con información de países
             $petInfo['contacts'] = Db::getInstance()->executeS("
-                SELECT c.*, co.call_prefix, co_lang.name as country_name
-                FROM " . _DB_PREFIX_ . "qsp_customer_contacts c
-                LEFT JOIN " . _DB_PREFIX_ . "country co ON c.contact_country_id = co.id_country
-                LEFT JOIN " . _DB_PREFIX_ . "country_lang co_lang ON co.id_country = co_lang.id_country 
-                    AND co_lang.id_lang = " . (int)$this->context->language->id . "
-                WHERE c.id_customer_code = $id
+                SELECT 
+                    c.*,
+                    co.call_prefix       AS call_prefix,
+                    co_lang.name         AS country_name,
+                    co_wp.call_prefix    AS call_prefix_wp,
+                    co_wp_lang.name      AS country_name_wp
+                FROM "._DB_PREFIX_."qsp_customer_contacts c
+                LEFT JOIN "._DB_PREFIX_."country      co      ON c.contact_country_id    = co.id_country
+                LEFT JOIN "._DB_PREFIX_."country_lang co_lang ON co.id_country           = co_lang.id_country
+                    AND co_lang.id_lang = ".(int)$this->context->language->id."
+                LEFT JOIN "._DB_PREFIX_."country      co_wp   ON c.contact_country_id_wp = co_wp.id_country
+                LEFT JOIN "._DB_PREFIX_."country_lang co_wp_lang ON co_wp.id_country     = co_wp_lang.id_country
+                    AND co_wp_lang.id_lang = ".(int)$this->context->language->id."
+                WHERE c.id_customer_code = ".(int)$id."
                 ORDER BY c.contact_index
             ");
+
             
             // Cargar información de países para los teléfonos del usuario principal
             $countryInfo = Db::getInstance()->executeS("
