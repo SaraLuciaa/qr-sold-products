@@ -139,15 +139,26 @@ class AdminQrCodeManagerController extends ModuleAdminController
             // Muestra la plantilla del formulario de generación
             $this->setTemplate('generate_bulk.tpl');
         } elseif (Tools::getValue('assign_order_form')) {
-            // Formulario de asignación por pedido (si lo usas)
+            $idOrder = (int)Tools::getValue('assign_order_form');
+            $search  = trim((string)Tools::getValue('q', ''));
+            $limit   = (int)Tools::getValue('limit', 500);
+
+            $totalRequired = $this->getOrderTotalRequiredWithQr($idOrder);
+            $availableQrs  = $this->getAvailableQrs($search, $limit);
+
             $this->context->smarty->assign([
-                'id_order' => (int)Tools::getValue('assign_order_form'),
-                'token' => Tools::getAdminTokenLite('AdminQrCodeManager'),
-                'back_link' => Context::getContext()->link->getAdminLink('AdminOrders', true, [], [
-                    'id_order' => (int)Tools::getValue('assign_order_form'),
+                'id_order'        => $idOrder,
+                'token'           => Tools::getAdminTokenLite('AdminQrCodeManager'),
+                'back_link'       => Context::getContext()->link->getAdminLink('AdminOrders', true, [], [
+                    'id_order' => $idOrder,
                     'vieworder' => 1
                 ]),
+                'q'               => $search,
+                'limit'           => $limit,
+                'total_required'  => $totalRequired,
+                'available_qrs'   => $availableQrs,
             ]);
+
             $this->setTemplate('assign_form.tpl');
         } else {
             parent::initContent();
@@ -217,6 +228,50 @@ class AdminQrCodeManagerController extends ModuleAdminController
             }
         }
 
+        if (Tools::isSubmit('submit_manual_assign_qrs')) {
+            try {
+                $order = new Order((int)Tools::getValue('id_order'));
+                if (!Validate::isLoadedObject($order)) {
+                    throw new PrestaShopException('Pedido inválido.');
+                }
+
+                $selected = Tools::getValue('selected_qrs', []); // checkboxes del tpl
+                if (!is_array($selected)) { $selected = []; }
+
+                $service = new QspQrCodeService();
+                $service->assignManualQrsToOrder($order, array_map('intval', $selected));
+
+                Tools::redirectAdmin(Context::getContext()->link->getAdminLink('AdminOrders', true, [], [
+                    'id_order' => $order->id,
+                    'vieworder' => 1,
+                    'conf' => 4
+                ]));
+            } catch (Exception $e) {
+                $this->errors[] = 'Error al asignar manualmente: '.$e->getMessage();
+            }
+        }
+
+        // --- Asignación automática disparada desde el hook del pedido ---
+        if ($orderId = (int)Tools::getValue('assign_auto_qrs')) {
+            try {
+                $order = new Order($orderId);
+                if (!Validate::isLoadedObject($order)) {
+                    throw new PrestaShopException('Pedido inválido.');
+                }
+                $service = new QspQrCodeService();
+                // Usa la lógica existente (creará si hace falta y asigna)
+                $service->ensureQrsAssignedToOrder($order);
+
+                Tools::redirectAdmin(Context::getContext()->link->getAdminLink('AdminOrders', true, [], [
+                    'id_order' => $order->id,
+                    'vieworder' => 1,
+                    'conf' => 4
+                ]));
+            } catch (Exception $e) {
+                $this->errors[] = 'No se pudo asignar automáticamente: '.$e->getMessage();
+            }
+        }
+
         // --- Descarga individual desde acción de fila ---
         if ($id = Tools::getValue('download_qr')) {
             try {
@@ -249,6 +304,19 @@ class AdminQrCodeManagerController extends ModuleAdminController
                 }
             } catch (Exception $e) {
                 $this->errors[] = $e->getMessage();
+            }
+        }
+
+        // --- Exportar a Excel QRs de un pedido completo ---
+        if ($orderId = (int)Tools::getValue('export_order_excel')) {
+            try {
+                $ids = $this->getQrIdsByOrder($orderId);
+                if (empty($ids)) {
+                    throw new PrestaShopException('Este pedido no tiene QRs asignados.');
+                }
+                $this->exportQrsToExcel($ids); // ya hace el stream + exit
+            } catch (Exception $e) {
+                $this->errors[] = 'No se pudo exportar el Excel: '.$e->getMessage();
             }
         }
 
@@ -326,5 +394,58 @@ class AdminQrCodeManagerController extends ModuleAdminController
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         $writer->save('php://output');
         exit;
+    }
+
+    private function getOrderTotalRequiredWithQr(int $idOrder): int
+    {
+        $db = Db::getInstance();
+        $details = Db::getInstance()->executeS('
+            SELECT od.id_order_detail, od.product_id, od.product_quantity
+            FROM `'._DB_PREFIX_.'order_detail` od
+            WHERE od.id_order='.(int)$idOrder
+        );
+
+        if (!$details) { return 0; }
+
+        $total = 0;
+        foreach ($details as $d) {
+            $hasQr = (bool)$db->getValue(
+                'SELECT has_qr FROM `'._DB_PREFIX_.'qsp_product_qr_config` WHERE id_product='.(int)$d['product_id']
+            );
+            if ($hasQr) {
+                $total += (int)$d['product_quantity'];
+            }
+        }
+        return $total;
+    }
+
+    private function getAvailableQrs(string $q = '', int $limit = 500): array
+    {
+        $limit = max(1, min(2000, $limit));
+        $sql = 'SELECT id_qr_code, code, validation_code, date_created
+                FROM `'._DB_PREFIX_.'qsp_qr_codes`
+                WHERE status="SIN_ASIGNAR"';
+
+        if ($q !== '') {
+            $qEsc = pSQL($q);
+            $sql .= ' AND (code LIKE "%'.$qEsc.'%" OR validation_code LIKE "%'.$qEsc.'%")';
+        }
+
+        $sql .= ' ORDER BY date_created DESC LIMIT '.$limit;
+
+        return Db::getInstance()->executeS($sql) ?: [];
+    }
+
+    private function getQrIdsByOrder(int $idOrder): array
+    {
+        $rows = Db::getInstance()->executeS('
+            SELECT q.id_qr_code
+            FROM `'._DB_PREFIX_.'qsp_qr_codes` q
+            INNER JOIN `'._DB_PREFIX_.'order_detail` od
+                ON od.id_order_detail = q.id_order_detail
+            WHERE od.id_order = '.(int)$idOrder.'
+            AND q.status IN ("SIN_ACTIVAR","ACTIVO")
+        ');
+        return $rows ? array_map('intval', array_column($rows, 'id_qr_code')) : [];
     }
 }

@@ -293,17 +293,50 @@ class QrSoldProducts extends Module
 
         $service = new QspQrCodeService();
 
+        // Si el pedido no tiene productos marcados con QR, no mostramos nada
         if (!$service->orderHasProductsWithQr($order)) {
             return '';
         }
 
+        // Si YA tiene QRs asignados: ocultar asignación y mostrar descargas
         if ($service->orderHasAssignedQrs($order)) {
-            $link = $context->link->getAdminLink('AdminQrCodeManager') . '&download_order_qrs=' . $orderId;
-            return '<a href="' . $link . '" class="btn btn-default"><i class="icon-download"></i> Descargar QRs</a>';
+            $zipLink = $context->link->getAdminLink('AdminQrCodeManager', true, [], [
+                'download_order_qrs' => $orderId,
+            ]);
+            $excelLink = $context->link->getAdminLink('AdminQrCodeManager', true, [], [
+                'export_order_excel' => $orderId,
+            ]);
+
+            return '
+                <div class="btn-group" style="margin:8px 0;">
+                    <a href="'.$zipLink.'" class="btn btn-default">
+                        <i class="icon-download"></i> Descargar ZIP de QRs
+                    </a>
+                    <a href="'.$excelLink.'" class="btn btn-default">
+                        <i class="icon-file-excel-o"></i> Exportar Excel de QRs
+                    </a>
+                </div>
+            ';
         }
 
-        $link = $context->link->getAdminLink('AdminQrCodeManager') . '&assign_order_form=' . $orderId;
-        return '<a href="' . $link . '" class="btn btn-default"><i class="icon-link"></i> Asignar QRs</a>';
+        // Si NO tiene QRs asignados: mostrar botones de asignación
+        $manualLink = $context->link->getAdminLink('AdminQrCodeManager', true, [], [
+            'assign_order_form' => $orderId,
+        ]);
+        $autoLink = $context->link->getAdminLink('AdminQrCodeManager', true, [], [
+            'assign_auto_qrs' => $orderId,
+        ]);
+
+        return '
+            <div class="btn-group" style="margin:8px 0;">
+                <a href="'.$manualLink.'" class="btn btn-warning">
+                    <i class="icon-pencil"></i> Asignar QRs (manual)
+                </a>
+                <a href="'.$autoLink.'" class="btn btn-success">
+                    <i class="icon-cogs"></i> Asignar QRs (automático)
+                </a>
+            </div>
+        ';
     }
 
     public function hookDisplayCustomerAccount()
@@ -362,23 +395,23 @@ class QrSoldProducts extends Module
         ];
     }
 
-    public function hookActionOrderStatusPostUpdate($params)
-    {
-        if (!isset($params['newOrderStatus']) || !isset($params['id_order'])) {
-            return;
-        }
+    // public function hookActionOrderStatusPostUpdate($params)
+    // {
+    //     if (!isset($params['newOrderStatus']) || !isset($params['id_order'])) {
+    //         return;
+    //     }
 
-        $orderStatus = $params['newOrderStatus'];
-        $idOrder = (int)$params['id_order'];
+    //     $orderStatus = $params['newOrderStatus'];
+    //     $idOrder = (int)$params['id_order'];
 
-        if ((int)$orderStatus->id === (int)Configuration::get('PS_OS_PAYMENT')) {
-            $order = new Order($idOrder);
+    //     if ((int)$orderStatus->id === (int)Configuration::get('PS_OS_PAYMENT')) {
+    //         $order = new Order($idOrder);
 
-            try {
-                (new QspQrCodeService())->ensureQrsAssignedToOrder($order);
-            } catch (PrestaShopException $e) {
-                PrestaShopLogger::addLog('Error al asignar QRs al pedido '.$idOrder.': '.$e->getMessage(), 3);
-            }
-        }
-    }
+    //         try {
+    //             (new QspQrCodeService())->ensureQrsAssignedToOrder($order);
+    //         } catch (PrestaShopException $e) {
+    //             PrestaShopLogger::addLog('Error al asignar QRs al pedido '.$idOrder.': '.$e->getMessage(), 3);
+    //         }
+    //     }
+    // }
 }

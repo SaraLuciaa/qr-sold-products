@@ -101,6 +101,83 @@ class QspQrCodeService
         $this->assignQrsToOrder($order, $qrCodes, $eligibleDetails);
     }
 
+    public function assignManualQrsToOrder(Order $order, array $qrIds): void
+    {
+        if (empty($qrIds)) {
+            throw new PrestaShopException('No seleccionaste QRs.');
+        }
+
+        $db = Db::getInstance();
+
+        // Filtra y asegura que existan y estén SIN_ASIGNAR
+        $ids = array_map('intval', $qrIds);
+        $in  = implode(',', $ids);
+
+        $rows = $db->executeS('
+            SELECT id_qr_code, status
+            FROM `'._DB_PREFIX_.'qsp_qr_codes`
+            WHERE id_qr_code IN ('.$in.')
+        ');
+
+        if (!$rows || count($rows) !== count($ids)) {
+            throw new PrestaShopException('Uno o más QRs no existen.');
+        }
+        foreach ($rows as $r) {
+            if ($r['status'] !== 'SIN_ASIGNAR') {
+                throw new PrestaShopException('Todos los QRs seleccionados deben estar en estado SIN_ASIGNAR.');
+            }
+        }
+
+        // Solo cuenta productos marcados con QR
+        $orderDetails = $order->getOrderDetailList();
+        $eligibleDetails = [];
+        foreach ($orderDetails as $d) {
+            $hasQr = (bool)$db->getValue(
+                'SELECT has_qr FROM `'._DB_PREFIX_.'qsp_product_qr_config` WHERE id_product='.(int)$d['product_id']
+            );
+            if ($hasQr) {
+                $eligibleDetails[] = $d;
+            }
+        }
+
+        if (empty($eligibleDetails)) {
+            throw new PrestaShopException('Este pedido no tiene productos configurados con QR.');
+        }
+
+        $totalRequired = array_reduce($eligibleDetails, fn($s,$d)=>$s+(int)$d['product_quantity'], 0);
+
+        if (count($ids) !== $totalRequired) {
+            throw new PrestaShopException(sprintf(
+                'Debes asignar exactamente %d QRs (seleccionados: %d).',
+                $totalRequired, count($ids)
+            ));
+        }
+
+        // Asignación (transacción recomendada)
+        $db->execute('START TRANSACTION');
+
+        try {
+            $idx = 0;
+            foreach ($eligibleDetails as $d) {
+                $qty = (int)$d['product_quantity'];
+                $idOrderDetail = (int)$d['id_order_detail'];
+
+                for ($i=0; $i<$qty; $i++) {
+                    $db->update('qsp_qr_codes', [
+                        'status' => 'SIN_ACTIVAR',
+                        'id_order_detail' => $idOrderDetail,
+                        'date_assigned' => date('Y-m-d H:i:s'),
+                    ], 'id_qr_code='.(int)$ids[$idx++]);
+                }
+            }
+
+            $db->execute('COMMIT');
+        } catch (Exception $e) {
+            $db->execute('ROLLBACK');
+            throw $e;
+        }
+    }
+
     public function ensureQrsAssignedToOrder(Order $order, string $prefix = '', int $size = 250): void
     {
         if (!$this->orderHasProductsWithQr($order)) {
