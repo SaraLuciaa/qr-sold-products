@@ -109,6 +109,86 @@ class QspQrCodeService
         ]);
     }
 
+    public function assignQrsToOrder(Order $order, array $qrCodes = [], array $filteredDetails = []): void
+    {
+        $orderDetails = $filteredDetails ?: $order->getOrderDetailList();
+        $db = Db::getInstance();
+        $qrIndex = 0;
+
+        foreach ($orderDetails as $detail) {
+            $qty = (int)$detail['product_quantity'];
+            $idOrderDetail = (int)$detail['id_order_detail'];
+
+            if (($qrIndex + $qty) > count($qrCodes)) {
+                PrestaShopLogger::addLog("No hay suficientes QRs para el pedido #{$order->id}", 3);
+                break;
+            }
+
+            for ($i = 0; $i < $qty; $i++) {
+                $db->update('qsp_qr_codes', [
+                    'status' => 'SIN_ACTIVAR',
+                    'id_order_detail' => $idOrderDetail,
+                    'date_assigned' => date('Y-m-d H:i:s')
+                ], 'id_qr_code = ' . (int)$qrCodes[$qrIndex++]['id_qr_code']);
+            }
+        }
+    }
+
+    public function createAndAssingQrsToOrder(Order $order, int $totalQtyUnused, string $prefix = '', int $size = 250): void
+    {
+        $db = Db::getInstance();
+        $orderDetails = $order->getOrderDetailList();
+
+        // 1) Filtrar líneas del pedido que requieren QR
+        $eligibleDetails = [];
+        foreach ($orderDetails as $detail) {
+            $idProduct = (int)$detail['product_id'];
+            $hasQr = (bool)$db->getValue(
+                'SELECT has_qr FROM `'._DB_PREFIX_.'qsp_product_qr_config` WHERE id_product='.(int)$idProduct
+            );
+            if ($hasQr) {
+                $eligibleDetails[] = $detail;
+            }
+        }
+
+        // 2) Cantidad total requerida
+        $totalQty = array_reduce($eligibleDetails, fn($sum, $d) => $sum + (int)$d['product_quantity'], 0);
+
+        if ($totalQty === 0) {
+            PrestaShopLogger::addLog("Pedido #{$order->id} sin productos con QR configurado. No se asignan códigos.", 1);
+            return;
+        }
+
+        // 3) Verificar cuántos QRs SIN_ASIGNAR hay disponibles
+        $availableCount = (int)$db->getValue('
+            SELECT COUNT(*) FROM `'._DB_PREFIX_.'qsp_qr_codes`
+            WHERE status="SIN_ASIGNAR"
+        ');
+
+        // 4) Si faltan, crear solo los necesarios
+        if ($availableCount < $totalQty) {
+            $toCreate = $totalQty - $availableCount;
+            PrestaShopLogger::addLog("Faltan {$toCreate} QRs para el pedido #{$order->id}. Creando los faltantes…", 1);
+            $this->createQrs($toCreate, $prefix, $size);
+        }
+
+        // 5) Tomar exactamente los requeridos y asignar
+        $qrCodes = $db->executeS('
+            SELECT id_qr_code 
+            FROM `'._DB_PREFIX_.'qsp_qr_codes`
+            WHERE status="SIN_ASIGNAR"
+            ORDER BY date_created ASC
+            LIMIT '.(int)$totalQty
+        );
+
+        if (!$qrCodes || (int)count($qrCodes) < $totalQty) {
+            // Defensa adicional: si por alguna razón aún no hay suficientes
+            throw new PrestaShopException('No hay suficientes QRs disponibles para asignar al pedido.');
+        }
+
+        $this->assignQrsToOrder($order, $qrCodes, $eligibleDetails);
+    }
+
     /**
      * Asignación manual de QRs seleccionados a un pedido.
      */
