@@ -310,6 +310,9 @@ class QrSoldProducts extends Module
             $excelLink = $context->link->getAdminLink('AdminQrCodeManager', true, [], [
                 'export_order_excel' => $orderId,
             ]);
+            $modifyLink = $context->link->getAdminLink('AdminQrCodeManager', true, [], [
+                'assign_order_form' => $orderId,
+            ]);
 
             return '
                 <div class="btn-group" style="margin:8px 0;">
@@ -318,6 +321,9 @@ class QrSoldProducts extends Module
                     </a>
                     <a href="'.$excelLink.'" class="btn btn-default">
                         <i class="icon-file-excel-o"></i> Exportar Excel de QRs
+                    </a>
+                    <a href="'.$modifyLink.'" class="btn btn-warning">
+                        <i class="icon-pencil"></i> Modificar QRs Asignados
                     </a>
                 </div>
             ';

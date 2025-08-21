@@ -192,74 +192,95 @@ class QspQrCodeService
     /**
      * Asignación manual de QRs seleccionados a un pedido.
      */
-    public function assignManualQrsToOrder(Order $order, array $qrIds): void
+    public function assignManualQrsToOrder(Order $order, array $selectedQrIds): void
     {
-        if (empty($qrIds)) {
-            throw new PrestaShopException('No seleccionaste QRs.');
-        }
+        $db = Db::getInstance();
 
-        $db  = Db::getInstance();
-        $ids = array_map('intval', $qrIds);
-        $in  = implode(',', $ids);
-
-        $rows = $db->executeS('
+        // --- 1. obtener QRs actualmente asignados al pedido ---
+        $currentQrs = $db->executeS('
             SELECT id_qr_code, status
-            FROM `'._DB_PREFIX_.'qsp_qr_codes`
-            WHERE id_qr_code IN ('.$in.')
-        ');
+            FROM '._DB_PREFIX_.'qsp_qr_codes q
+            INNER JOIN '._DB_PREFIX_.'order_detail od
+            ON q.id_order_detail = od.id_order_detail
+            WHERE od.id_order = '.(int)$order->id
+        );
 
-        if (!$rows || count($rows) !== count($ids)) {
-            throw new PrestaShopException('Uno o más QRs no existen.');
-        }
-        foreach ($rows as $r) {
-            if ($r['status'] !== 'SIN_ASIGNAR') {
-                throw new PrestaShopException('Todos los QRs seleccionados deben estar en estado SIN_ASIGNAR.');
-            }
-        }
+        $currentIds = array_map('intval', array_column($currentQrs, 'id_qr_code'));
+        $selectedQrIds = array_map('intval', $selectedQrIds);
 
-        // Solo líneas con QR habilitado
-        $orderDetails    = $order->getOrderDetailList();
-        $eligibleDetails = [];
-        foreach ($orderDetails as $d) {
-            $hasQr = (bool)$db->getValue(
-                'SELECT has_qr FROM `'._DB_PREFIX_.'qsp_product_qr_config` WHERE id_product='.(int)$d['product_id']
+        // --- 2. QRs a desasignar (estaban pero ya no están seleccionados) ---
+        $toUnassign = array_diff($currentIds, $selectedQrIds);
+
+        foreach ($toUnassign as $idQr) {
+            $db->update(
+                'qsp_qr_codes',
+                [
+                    'status'          => 'SIN_ASIGNAR',
+                    'id_order_detail' => null,
+                    'date_assigned'   => null,
+                ],
+                'id_qr_code = '.(int)$idQr
             );
-            if ($hasQr) {
-                $eligibleDetails[] = $d;
+        }
+
+        // --- 3. QRs seleccionados: asignar o validar ---
+        foreach ($selectedQrIds as $idQr) {
+            $qr = $db->getRow('
+                SELECT id_qr_code, status, id_order_detail
+                FROM '._DB_PREFIX_.'qsp_qr_codes
+                WHERE id_qr_code = '.(int)$idQr
+            );
+
+            if (!$qr) {
+                throw new PrestaShopException('QR inválido seleccionado.');
             }
-        }
-        if (empty($eligibleDetails)) {
-            throw new PrestaShopException('Este pedido no tiene productos configurados con QR.');
-        }
 
-        $totalRequired = array_reduce($eligibleDetails, fn($s,$d)=>$s+(int)$d['product_quantity'], 0);
-        if (count($ids) !== $totalRequired) {
-            throw new PrestaShopException(sprintf(
-                'Debes asignar exactamente %d QRs (seleccionados: %d).',
-                $totalRequired, count($ids)
-            ));
-        }
+            // nunca permitir activos
+            if ($qr['status'] === 'ACTIVO') {
+                throw new PrestaShopException('No se pueden reasignar QRs activos.');
+            }
 
-        // Transacción
-        $db->execute('START TRANSACTION');
-        try {
-            $idx = 0;
-            foreach ($eligibleDetails as $d) {
-                $qty = (int)$d['product_quantity'];
-                $idOrderDetail = (int)$d['id_order_detail'];
-
-                for ($i = 0; $i < $qty; $i++) {
-                    $db->update('qsp_qr_codes', [
-                        'status'          => 'SIN_ACTIVAR',
-                        'id_order_detail' => $idOrderDetail,
-                        'date_assigned'   => date('Y-m-d H:i:s'),
-                    ], 'id_qr_code='.(int)$ids[$idx++]);
+            if ($qr['status'] === 'SIN_ASIGNAR') {
+                // buscar un order_detail del pedido
+                $orderDetailId = null;
+                $orderDetailIds = $db->executeS('
+                    SELECT od.id_order_detail
+                    FROM '._DB_PREFIX_.'order_detail od
+                    WHERE od.id_order = '.(int)$order->id.'
+                    ORDER BY od.id_order_detail ASC
+                ');
+                if ($orderDetailIds && count($orderDetailIds) > 0) {
+                    $orderDetailId = (int)$orderDetailIds[0]['id_order_detail'];
                 }
+
+                if (!$orderDetailId) {
+                    throw new PrestaShopException('No se encontró detalle de pedido para asignar el QR.');
+                }
+
+                $db->update(
+                    'qsp_qr_codes',
+                    [
+                        'status'          => 'SIN_ACTIVAR',
+                        'id_order_detail' => (int)$orderDetailId,
+                        'date_assigned'   => date('Y-m-d H:i:s'),
+                    ],
+                    'id_qr_code = '.(int)$idQr
+                );
+
+            } elseif ($qr['status'] === 'SIN_ACTIVAR') {
+                // validar que ya pertenezca al mismo pedido
+                $alreadyAssigned = $db->getValue('
+                    SELECT COUNT(*)
+                    FROM '._DB_PREFIX_.'order_detail od
+                    WHERE od.id_order = '.(int)$order->id.'
+                    AND od.id_order_detail = '.(int)$qr['id_order_detail']
+                );
+
+                if (!$alreadyAssigned) {
+                    throw new PrestaShopException('El QR SIN_ACTIVAR no pertenece a este pedido.');
+                }
+                // si está bien, no se toca (se mantiene)
             }
-            $db->execute('COMMIT');
-        } catch (Exception $e) {
-            $db->execute('ROLLBACK');
-            throw $e;
         }
     }
 

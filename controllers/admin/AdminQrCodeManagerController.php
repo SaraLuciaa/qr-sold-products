@@ -145,6 +145,7 @@ class AdminQrCodeManagerController extends ModuleAdminController
 
             $totalRequired = $this->getOrderTotalRequiredWithQr($idOrder);
             $availableQrs  = $this->getAvailableQrs($search, $limit);
+            $assignedQrs   = $this->getAssignedQrsByOrder($idOrder); // NUEVO
 
             $this->context->smarty->assign([
                 'id_order'        => $idOrder,
@@ -157,6 +158,7 @@ class AdminQrCodeManagerController extends ModuleAdminController
                 'limit'           => $limit,
                 'total_required'  => $totalRequired,
                 'available_qrs'   => $availableQrs,
+                'assigned_qrs'    => $assignedQrs, // NUEVO
             ]);
 
             $this->setTemplate('assign_form.tpl');
@@ -439,5 +441,16 @@ class AdminQrCodeManagerController extends ModuleAdminController
             AND q.status IN ("SIN_ACTIVAR","ACTIVO")
         ');
         return $rows ? array_map('intval', array_column($rows, 'id_qr_code')) : [];
+    }
+
+    private function getAssignedQrsByOrder(int $idOrder): array
+    {
+        $sql = 'SELECT q.id_qr_code, q.code, q.validation_code, q.status
+                FROM `'._DB_PREFIX_.'qsp_qr_codes` q
+                INNER JOIN `'._DB_PREFIX_.'order_detail` od
+                ON q.id_order_detail = od.id_order_detail
+                WHERE od.id_order = '.(int)$idOrder;
+
+        return Db::getInstance()->executeS($sql) ?: [];
     }
 }

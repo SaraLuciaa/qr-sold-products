@@ -1,5 +1,3 @@
-{* views/templates/admin/assign_form.tpl *}
-
 <div class="panel">
   <div class="panel-heading">
     Asignar QRs manualmente al pedido #{$id_order}
@@ -63,10 +61,33 @@
                 </th>
                 <th>Código</th>
                 <th>Validación</th>
-                <th>Fecha creación</th>
+                <th>Estado</th>
               </tr>
             </thead>
             <tbody>
+
+              {* ---------- QRs YA ASIGNADOS ---------- *}
+              {foreach $assigned_qrs as $qr}
+                <tr>
+                  <td>
+                    {if $qr.status == 'ACTIVO'}
+                      <input type="checkbox" checked disabled>
+                      <input type="hidden" name="selected_qrs[]" value="{$qr.id_qr_code}">
+                    {else}
+                      <input type="checkbox" class="qr-box" value="{$qr.id_qr_code}" checked>
+                    {/if}
+                  </td>
+                  <td><code>{$qr.code}</code></td>
+                  <td><span class="label label-default">{$qr.validation_code}</span></td>
+                  <td>
+                    <span class="badge badge-{if $qr.status=='ACTIVO'}success{else}warning{/if}">
+                      {$qr.status}
+                    </span>
+                  </td>
+                </tr>
+              {/foreach}
+
+              {* ---------- QRs DISPONIBLES (SIN_ASIGNAR) ---------- *}
               {if $available_qrs|@count == 0}
                 <tr><td colspan="4" class="text-center text-muted">
                   <i class="icon-warning"></i> No hay QRs disponibles con ese filtro.
@@ -79,7 +100,7 @@
                     </td>
                     <td><code>{$qr.code}</code></td>
                     <td><span class="label label-default">{$qr.validation_code}</span></td>
-                    <td>{$qr.date_created}</td>
+                    <td><span class="badge badge-info">SIN ASIGNAR</span></td>
                   </tr>
                 {/foreach}
               {/if}
@@ -93,7 +114,7 @@
             / <strong>{$total_required}</strong>
           </span>
           <button type="submit" class="btn btn-success" id="submitBtn" disabled>
-            <i class="icon-check"></i> Asignar manualmente
+            <i class="icon-check"></i> Guardar asignación
           </button>
           <a href="{$back_link}" class="btn btn-outline-secondary">
             <i class="icon-times"></i> Cancelar
@@ -151,9 +172,11 @@
 
   function syncUI(){
     var boxes = Array.from(document.querySelectorAll('.qr-box'));
+    var fixedActives = document.querySelectorAll('input[type="hidden"][name="selected_qrs[]"]').length;
+
     boxes.forEach(b => b.checked = selected.has(b.value));
 
-    var count = selected.size;
+    var count = selected.size + fixedActives;
     selectedCountEl.textContent = count;
     submitBtn.disabled = (count !== required);
 
@@ -191,7 +214,10 @@
   }
 
   form.addEventListener('submit', function(e){
-    if (selected.size !== required){
+    var fixedActives = document.querySelectorAll('input[type="hidden"][name="selected_qrs[]"]').length;
+    var total = selected.size + fixedActives;
+
+    if (total !== required){
       e.preventDefault();
       alert('Debes seleccionar exactamente ' + required + ' QRs.');
     } else {
