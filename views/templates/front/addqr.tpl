@@ -88,11 +88,94 @@
                value="{$qr_data.user_stature_cm|default:''|escape:'html'}">
     </div>
     
+
+    <div class="form-group">
+        <label for="user_country_id">País de residencia *</label>
+        <select name="user_country_id" id="user_country_id" class="form-control" required>
+            <option value="">— Selecciona país —</option>
+            {foreach from=$countries item=country}
+                <option value="{$country.id_country}" 
+                    {if ($qr_data.user_country_id|default:'' == '' && $country.id_country == 69) || $qr_data.user_country_id == $country.id_country}selected{/if}>
+                    {$country.name}
+                </option>
+            {/foreach}
+        </select>
+    </div>
+
+    <div class="form-group" id="state-group" style="display:none;">
+        <label for="user_state_id">Estado/Departamento</label>
+        <select name="user_state_id" id="user_state_id" class="form-control" disabled>
+            <option value="">— Selecciona estado —</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="user_city">Ciudad</label>
+        <input type="text" name="user_city" id="user_city" class="form-control" value="{$qr_data.user_city|default:''|escape:'html'}">
+    </div>
+
     <div class="form-group">
         <label for="user_address">Dirección</label>
         <input type="text" name="user_address" id="user_address" class="form-control"
                value="{$qr_data.user_address|default:''|escape:'html'}">
     </div>
+<script>
+// Carga dinámica de estados por AJAX y muestra/oculta el campo
+document.addEventListener('DOMContentLoaded', function() {
+    var countrySelect = document.getElementById('user_country_id');
+    var stateSelect = document.getElementById('user_state_id');
+    var stateGroup = document.getElementById('state-group');
+    function showStateGroup(show) {
+        if (stateGroup) stateGroup.style.display = show ? '' : 'none';
+    }
+    if (countrySelect && stateSelect && stateGroup) {
+        function loadStates(countryId, selectedStateId) {
+            stateSelect.innerHTML = '<option value="">Cargando...</option>';
+            stateSelect.disabled = true;
+            fetch('index.php?fc=module&module=qrsoldproducts&controller=ajaxstates&country_id=' + countryId)
+                .then(function(response) { return response.json(); })
+                .then(function(states) {
+                    if (states.length > 0) {
+                        var options = '<option value="">— Selecciona estado —</option>';
+                        for (var i = 0; i < states.length; i++) {
+                            var selected = (selectedStateId && states[i].id_state == selectedStateId) ? 'selected' : '';
+                            options += '<option value="' + states[i].id_state + '" ' + selected + '>' + states[i].name + '</option>';
+                        }
+                        stateSelect.innerHTML = options;
+                        stateSelect.disabled = false;
+                        showStateGroup(true);
+                    } else {
+                        stateSelect.innerHTML = '<option value="">— Selecciona estado —</option>';
+                        stateSelect.disabled = true;
+                        showStateGroup(false);
+                    }
+                })
+                .catch(function() {
+                    stateSelect.innerHTML = '<option value="">— Selecciona estado —</option>';
+                    stateSelect.disabled = true;
+                    showStateGroup(false);
+                });
+        }
+
+        // Inicializar si ya hay país seleccionado
+        if (countrySelect.value) {
+            loadStates(countrySelect.value, '{$qr_data.user_state_id|default:''}');
+        } else {
+            showStateGroup(false);
+        }
+
+        countrySelect.addEventListener('change', function() {
+            if (this.value) {
+                loadStates(this.value, '');
+            } else {
+                stateSelect.innerHTML = '<option value="">— Selecciona estado —</option>';
+                stateSelect.disabled = true;
+                showStateGroup(false);
+            }
+        });
+    }
+});
+</script>
 
     <div class="form-group">
         <label for="user_mobile_country_id">Teléfono móvil *</label>

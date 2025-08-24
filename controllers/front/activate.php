@@ -65,7 +65,23 @@ class QrsoldproductsActivateModuleFrontController extends ModuleFrontController
                 }
             }
 
+
             $id = (int)$petInfo['id_customer_code'];
+
+            // Obtener nombre de país y estado si existen
+            if (!empty($petInfo['user_country_id'])) {
+                $petInfo['user_country_name'] = Db::getInstance()->getValue('
+                    SELECT name FROM ' . _DB_PREFIX_ . 'country_lang
+                    WHERE id_country = ' . (int)$petInfo['user_country_id'] . '
+                    AND id_lang = ' . (int)$this->context->language->id . '
+                ');
+            }
+            if (!empty($petInfo['user_state_id'])) {
+                $petInfo['user_state_name'] = Db::getInstance()->getValue('
+                    SELECT name FROM ' . _DB_PREFIX_ . 'state
+                    WHERE id_state = ' . (int)$petInfo['user_state_id'] . '
+                ');
+            }
 
             // Verificar si realmente es el dueño cuando se marca como own=1
             if ($ownView && $this->context->customer->isLogged()) {

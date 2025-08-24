@@ -16,6 +16,9 @@ class QspCustomerCode extends ObjectModel
     public $user_gender;
     public $user_stature_cm;
     public $user_address;
+    public $user_city;
+    public $user_state_id;
+    public $user_country_id;
     public $user_mobile_country_id;
     public $user_mobile_number;
     public $user_home_country_id;
@@ -38,6 +41,22 @@ class QspCustomerCode extends ObjectModel
         'primary' => 'id_customer_code',
         'multilang' => false,
         'fields' => [
+            'user_city' => [
+                'type' => self::TYPE_STRING,
+                'validate' => 'isGenericName',
+                'size' => 128,
+                'allow_null' => true,
+            ],
+            'user_state_id' => [
+                'type' => self::TYPE_INT,
+                'validate' => 'isUnsignedInt',
+                'allow_null' => true,
+            ],
+            'user_country_id' => [
+                'type' => self::TYPE_INT,
+                'validate' => 'isUnsignedInt',
+                'allow_null' => true,
+            ],
             'id_qr_code' => [
                 'type' => self::TYPE_INT,
                 'validate' => 'isUnsignedInt',

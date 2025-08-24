@@ -145,6 +145,20 @@
                 {if $pet.user_address}
                     <li class="list-group-item"><strong>Dirección:</strong> {$pet.user_address}</li>
                 {/if}
+                {if $pet.user_country_id || $pet.user_state_id || $pet.user_city}
+                    <li class="list-group-item">
+                        <strong>Ubicación:</strong>
+                        {if $pet.user_city}
+                            {$pet.user_city},
+                        {/if}
+                        {if $pet.user_state_id}
+                            {$pet.user_state_name|default:'-'},
+                        {/if}
+                        {if $pet.user_country_id}
+                            {$pet.user_country_name|default:'-'}
+                        {/if}                       
+                    </li>
+                {/if}
                 {if $pet.extra_notes}
                     <li class="list-group-item"><strong>Observaciones:</strong> {$pet.extra_notes}</li>
                 {/if}

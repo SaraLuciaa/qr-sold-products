@@ -95,6 +95,10 @@ class QrSoldProducts extends Module
             `user_stature_cm` SMALLINT UNSIGNED DEFAULT NULL,
             `user_address` VARCHAR(255) DEFAULT NULL,
 
+            `user_city` VARCHAR(128) DEFAULT NULL,
+            `user_state_id` INT UNSIGNED DEFAULT NULL,
+            `user_country_id` INT UNSIGNED DEFAULT NULL,
+
             `user_mobile_country_id` INT UNSIGNED NOT NULL,
             `user_mobile_number` VARCHAR(20) NOT NULL,
 
@@ -119,7 +123,9 @@ class QrSoldProducts extends Module
             FOREIGN KEY (`id_qr_code`) REFERENCES `' . _DB_PREFIX_ . 'qsp_qr_codes`(`id_qr_code`) ON DELETE CASCADE,
             FOREIGN KEY (`user_mobile_country_id`) REFERENCES `' . _DB_PREFIX_ . 'country`(`id_country`),
             FOREIGN KEY (`user_home_country_id`) REFERENCES `' . _DB_PREFIX_ . 'country`(`id_country`),
-            FOREIGN KEY (`user_work_country_id`) REFERENCES `' . _DB_PREFIX_ . 'country`(`id_country`)
+            FOREIGN KEY (`user_work_country_id`) REFERENCES `' . _DB_PREFIX_ . 'country`(`id_country`),
+            FOREIGN KEY (`user_country_id`) REFERENCES `' . _DB_PREFIX_ . 'country`(`id_country`),
+            FOREIGN KEY (`user_state_id`) REFERENCES `' . _DB_PREFIX_ . 'state`(`id_state`)
         ) ENGINE=' . _MYSQL_ENGINE_ . '';
 
         $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'qsp_customer_contacts` (

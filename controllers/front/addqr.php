@@ -47,6 +47,19 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
             ORDER BY cl.name ASC
         ');
         $this->context->smarty->assign('countries', $countries);
+
+        // Estados: solo si hay país seleccionado
+        $selected_country_id = Tools::getValue('user_country_id');
+        $states = [];
+        if ($selected_country_id) {
+            $states = Db::getInstance()->executeS('
+                SELECT s.id_state, s.name
+                FROM ' . _DB_PREFIX_ . 'state s
+                WHERE s.id_country = ' . (int)$selected_country_id . ' AND s.active = 1
+                ORDER BY s.name ASC
+            ');
+        }
+        $this->context->smarty->assign('states', $states);
     }
 
     private function handleImageUpload($id_customer_code)
@@ -224,37 +237,40 @@ class QrsoldproductsAddqrModuleFrontController extends ModuleFrontController
         if ($customerId !== null) {
             $customer->id_customer = (int)$customerId;
         }
-    
+
         $customer->user_name = Tools::getValue('user_name');
         $customer->user_type_dni = Tools::getValue('user_type_dni');
         $customer->user_dni = Tools::getValue('user_dni');
         $customer->user_birthdate = trim(Tools::getValue('user_birthdate')) ?: null;
         $customer->user_gender = trim(Tools::getValue('user_gender')) ?: null;
-    
+
         $customer->user_stature_cm = Tools::getValue('user_stature_cm') ? (int)Tools::getValue('user_stature_cm') : null;
         $customer->user_address = trim(Tools::getValue('user_address')) ?: null;
+        $customer->user_city = trim(Tools::getValue('user_city')) ?: null;
+        $customer->user_state_id = Tools::getValue('user_state_id') ? (int)Tools::getValue('user_state_id') : null;
+        $customer->user_country_id = $this->normalizeCountryId('user_country_id');
         $customer->user_weight_kg = Tools::getValue('user_weight_kg') ? (float)Tools::getValue('user_weight_kg') : null;
-    
+
         $customer->user_mobile_number = Tools::getValue('user_mobile_number');
         $customer->user_home_number = trim(Tools::getValue('user_home_number')) ?: null;
         $customer->user_work_number = trim(Tools::getValue('user_work_number')) ?: null;
 
-        $customer->user_mobile_country_id = $this->normalizeCountryId('user_mobile_country_id');     // este es requerido por tu validateForm()
-        $customer->user_home_country_id = $this->normalizeCountryId('user_home_country_id'); // opcional
-        $customer->user_work_country_id = $this->normalizeCountryId('user_work_country_id'); // opcional
+        $customer->user_mobile_country_id = $this->normalizeCountryId('user_mobile_country_id');
+        $customer->user_home_country_id = $this->normalizeCountryId('user_home_country_id');
+        $customer->user_work_country_id = $this->normalizeCountryId('user_work_country_id');
 
         $customer->user_has_eps = (int)Tools::getValue('user_has_eps', 0);
         $customer->user_eps_name = trim(Tools::getValue('user_eps_name')) ?: null;
-    
+
         $customer->user_has_prepaid = (int)Tools::getValue('user_has_prepaid', 0);
         $customer->user_prepaid_name = trim(Tools::getValue('user_prepaid_name')) ?: null;
-    
+
         $customer->user_blood_type = trim(Tools::getValue('user_blood_type')) ?: null;
         $customer->user_accepts_transfusions = (int)Tools::getValue('user_accepts_transfusions', 1);
         $customer->user_organ_donor = (int)Tools::getValue('user_organ_donor', 0);
-    
+
         $customer->extra_notes = trim(Tools::getValue('extra_notes')) ?: null;
-        
+
         // Solo establecer date_activated si es un nuevo registro
         if ($isNewRecord) {
             $customer->date_activated = date('Y-m-d H:i:s');
