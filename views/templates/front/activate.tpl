@@ -1,6 +1,6 @@
 {extends file='page.tpl'}
 
-{block name='page_title'}QR de Persona{/block}
+{block name='page_header_container'}{/block}
 
 {block name='page_content'}
 
@@ -58,12 +58,6 @@
 
 {include file='module:qrsoldproducts/views/templates/front/locationhook.tpl'}
 
-{if isset($error_message)}
-    <div class="alert alert-danger">
-        {$error_message}
-    </div>
-{/if}
-
 {if $pet}
     {* FOTO *}
     {if $pet.user_image}
@@ -81,9 +75,23 @@
         </div>
     {/if}
 
+
     {* NOMBRE *}
-    <div style="text-align: center; margin-bottom: 30px;">
+    <div style="text-align: center; margin-bottom: 10px;">
         <h1 class="h2">{$pet.user_name}</h1>
+    </div>
+
+
+    {* TIPO DE SANGRE Y ENFERMEDADES/ALERGIAS *}
+    <div style="display: flex; flex-direction: row; justify-content: center; align-items: center; gap: 0; margin-bottom: 30px;">
+        <div style="background: #fff; border-radius: 16px 0 0 16px; box-shadow: 0 2px 8px #0001; padding: 18px 32px; min-width: 180px; text-align: center; display: flex; flex-direction: column; align-items: center; border-right: 1px solid #eee;">
+            <span style="font-size:1.5em; font-weight:700; color:#b94a48;">{if $pet.user_blood_type}{$pet.user_blood_type}{else}-{/if}</span>
+            <span style="font-size:1em; color:#888; font-weight:400;">Tipo de sangre</span>
+        </div>
+        <div style="background: #fff; border-radius: 0 16px 16px 0; box-shadow: 0 2px 8px #0001; padding: 18px 32px; min-width: 180px; text-align: center; display: flex; flex-direction: column; align-items: center;">
+            <span style="font-size:1.5em; font-weight:700; color:#2c5aa0;">{if $pet.edad neq ''}{$pet.edad}{else}-{/if}</span>
+            <span style="font-size:1em; color:#888; font-weight:400;">Edad</span>
+        </div>
     </div>
 
     {* DATOS PERSONALES - DESPLEGABLE *}

@@ -10,7 +10,6 @@ class QspQrCodeService
 {
     private string $qrDir;
     private int $codeLen   = 8;
-    private int $qrVersion = 1;            
     private int $eccLevel  = EccLevel::L;  
 
     public function __construct()
@@ -40,7 +39,7 @@ class QspQrCodeService
             $qr->date_created = date('Y-m-d H:i:s');
             $qr->add();
 
-            $options   = $this->getQrOptions($this->eccLevel, $scalePxPerModule, 4);
+            $options   = $this->getQrOptions($this->eccLevel, $scalePxPerModule, 1);
             $imageData = (new QRCode($options))->render($payload);
 
             $filePath = $this->qrDir . $code . '.png';

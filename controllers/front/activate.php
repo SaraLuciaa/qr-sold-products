@@ -13,6 +13,7 @@ class QrsoldproductsActivateModuleFrontController extends ModuleFrontController
         $petInfo = null;
         $errorMessage = '';
 
+
         try {
             if (!$code) {
                 throw new Exception('No se recibió ningún código QR.');
@@ -51,19 +52,29 @@ class QrsoldproductsActivateModuleFrontController extends ModuleFrontController
                 throw new Exception('QR no válido o inactivo.');
             }
 
+            // Calcular edad a partir de la fecha de nacimiento
+            $petInfo['edad'] = '';
+            if (!empty($petInfo['user_birthdate'])) {
+                try {
+                    $birth = new DateTime($petInfo['user_birthdate']);
+                    $now = new DateTime();
+                    $age = $now->diff($birth)->y;
+                    $petInfo['edad'] = $age;
+                } catch (Exception $e) {
+                    $petInfo['edad'] = '';
+                }
+            }
+
             $id = (int)$petInfo['id_customer_code'];
-            
+
             // Verificar si realmente es el dueño cuando se marca como own=1
             if ($ownView && $this->context->customer->isLogged()) {
                 $loggedCustomerId = (int)$this->context->customer->id;
                 $qrCustomerId = (int)$petInfo['id_customer'];
-                
-                // Si el usuario logueado no coincide con el dueño del QR, no es realmente el dueño
                 if ($loggedCustomerId !== $qrCustomerId) {
                     $ownView = false;
                 }
             } elseif ($ownView && !$this->context->customer->isLogged()) {
-                // Si no está logueado pero se marca como own=1, no es el dueño
                 $ownView = false;
             }
 

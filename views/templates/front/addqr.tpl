@@ -101,7 +101,7 @@
                 <option value="">— Selecciona país —</option>
                 {foreach from=$countries item=country}
                     <option value="{$country.id_country}" 
-                        {if $qr_data.user_mobile_country_id == $country.id_country}selected{/if}>
+                        {if ($qr_data.user_mobile_country_id|default:'' == '' && $country.id_country == 69) || $qr_data.user_mobile_country_id == $country.id_country}selected{/if}>
                         +{$country.call_prefix} ({$country.name})
                     </option>
                 {/foreach}
@@ -118,7 +118,7 @@
                 <option value="">— Selecciona país —</option>
                 {foreach from=$countries item=country}
                     <option value="{$country.id_country}"
-                    {if $qr_data.user_home_country_id == $country.id_country}selected{/if}>
+                    {if ($qr_data.user_home_country_id|default:'' == '' && $country.id_country == 69) || $qr_data.user_home_country_id == $country.id_country}selected{/if}>
                     +{$country.call_prefix} ({$country.name})
                     </option>
                 {/foreach}
@@ -135,7 +135,7 @@
                 <option value="">— Selecciona país —</option>
                 {foreach from=$countries item=country}
                     <option value="{$country.id_country}" 
-                        {if $qr_data.user_work_country_id == $country.id_country}selected{/if}>
+                        {if ($qr_data.user_work_country_id|default:'' == '' && $country.id_country == 69) || $qr_data.user_work_country_id == $country.id_country}selected{/if}>
                         +{$country.call_prefix} ({$country.name})
                     </option>
                 {/foreach}
@@ -236,7 +236,7 @@
                         <option value="">— Selecciona país —</option>
                         {foreach from=$countries item=country}
                             <option value="{$country.id_country}" 
-                                {if $qr_data.contacts.0.contact_country_id == $country.id_country}selected{/if}>
+                                {if ($qr_data.contacts.0.contact_country_id|default:'' == '' && $country.id_country == 69) || $qr_data.contacts.0.contact_country_id == $country.id_country}selected{/if}>
                                 +{$country.call_prefix} ({$country.name})
                             </option>
                         {/foreach}
@@ -251,7 +251,7 @@
                         <option value="">— Selecciona país —</option>
                         {foreach from=$countries item=country}
                             <option value="{$country.id_country}" 
-                                {if $qr_data.contacts.0.contact_country_id_wp == $country.id_country}selected{/if}>
+                                {if ($qr_data.contacts.0.contact_country_id_wp|default:'' == '' && $country.id_country == 69) || $qr_data.contacts.0.contact_country_id_wp == $country.id_country}selected{/if}>
                                 +{$country.call_prefix} ({$country.name})
                             </option>
                         {/foreach}
@@ -291,7 +291,7 @@
                         <option value="">— Selecciona país —</option>
                         {foreach from=$countries item=country}
                             <option value="{$country.id_country}" 
-                                {if $qr_data.contacts.1.contact_country_id == $country.id_country}selected{/if}>
+                                {if ($qr_data.contacts.1.contact_country_id|default:'' == '' && $country.id_country == 69) || $qr_data.contacts.1.contact_country_id == $country.id_country}selected{/if}>
                                 +{$country.call_prefix} ({$country.name})
                             </option>
                         {/foreach}
@@ -306,7 +306,7 @@
                         <option value="">— Selecciona país —</option>
                         {foreach from=$countries item=country}
                             <option value="{$country.id_country}" 
-                                {if $qr_data.contacts.1.contact_country_id_wp == $country.id_country}selected{/if}>
+                                {if ($qr_data.contacts.1.contact_country_id_wp|default:'' == '' && $country.id_country == 69) || $qr_data.contacts.1.contact_country_id_wp == $country.id_country}selected{/if}>
                                 +{$country.call_prefix} ({$country.name})
                             </option>
                         {/foreach}
@@ -565,7 +565,7 @@
 
 .condition-item > div,
 .allergy-item > div {
-    flex: 1 1 48%;
+    flex: 1 1 69%;
 }
 
 .medication-item > div {
