@@ -25,7 +25,7 @@
 
     {if !$edit_mode}
         <div class="form-group">
-            <label for="validation_code">Código de Validación *</label>
+        <label for="validation_code">Código de Validación <span style="color:red">*</span></label>
             <input type="text" name="validation_code" id="validation_code" class="form-control" required>
         </div>
     {else}
@@ -45,13 +45,13 @@
     </div>
     
     <div class="form-group">
-        <label for="user_name">Nombre Completo *</label>
+    <label for="user_name">Nombre Completo <span style="color:red">*</span></label>
         <input type="text" name="user_name" id="user_name" class="form-control" required
                value="{$qr_data.user_name|default:''|escape:'html'}">
     </div>
 
     <div class="form-group">
-        <label for="user_type_dni">Tipo de Documento *</label>
+    <label for="user_type_dni">Tipo de Documento <span style="color:red">*</span></label>
         <select name="user_type_dni" id="user_type_dni" class="form-control" required>
             <option value="" disabled {if $qr_data.user_type_dni|default:''|escape:'html' == ""}selected{/if}>Selecciona una opción</option>
             <option value="CC" {if $qr_data.user_type_dni|default:''|escape:'html' == "CC"}selected{/if}>Cédula de ciudadanía</option>
@@ -61,7 +61,7 @@
     </div>
 
     <div class="form-group">
-        <label for="user_dni">Número de Documento *</label>
+    <label for="user_dni">Número de Documento <span style="color:red">*</span></label>
         <input type="text" name="user_dni" id="user_dni" class="form-control" required
                value="{$qr_data.user_dni|default:''|escape:'html'}">
     </div>
@@ -90,7 +90,7 @@
     
 
     <div class="form-group">
-        <label for="user_country_id">País de residencia *</label>
+    <label for="user_country_id">País de residencia <span style="color:red">*</span></label>
         <select name="user_country_id" id="user_country_id" class="form-control" required>
             <option value="">— Selecciona país —</option>
             {foreach from=$countries item=country}
@@ -178,7 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
     <div class="form-group">
-        <label for="user_mobile_country_id">Teléfono móvil *</label>
+    <label for="user_mobile_country_id">Teléfono móvil <span style="color:red">*</span></label>
         <div class="form-inline">
             <select name="user_mobile_country_id" class="form-control mr-2" style="width:auto;" required>
                 <option value="">— Selecciona país —</option>
@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="contact-item" data-contact-index="0">
             <h4>Contacto de Emergencia 1</h4>
             <div class="form-group">
-                <label for="contact_name_0">Nombre Completo *</label>
+                <label for="contact_name_0">Nombre Completo <span style="color:red">*</span></label>
                 <input type="text" name="contact_name[]" id="contact_name_0" class="form-control" required
                        value="{$qr_data.contacts.0.contact_name|default:$customer->firstname|escape:'html'}">
             </div>
@@ -328,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
                            value="{$qr_data.contacts.0.contact_phone_number|default:''|escape:'html'}">
                 </div>
                 
-                <label for="contact_phone_wp_0">WhatsApp</label>
+                <label for="contact_phone_wp_0">WhatsApp <span style="color:red">*</span></label>
                 <div class="form-inline">
                     <select name="contact_country_id_wp[]" class="form-control mr-2" style="width:auto;" required>
                         <option value="">— Selecciona país —</option>
