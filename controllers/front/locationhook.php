@@ -34,11 +34,11 @@ class QrsoldproductsLocationhookModuleFrontController extends ModuleFrontControl
 
             // Buscar los contactos de emergencia asociados al código QR con información de país
             $contacts = Db::getInstance()->executeS("
-                SELECT c.contact_name, c.contact_phone_number, co.call_prefix, cc.user_name
+                SELECT c.contact_name, c.contact_phone_number_wp, co.call_prefix, cc.user_name
                 FROM " . _DB_PREFIX_ . "qsp_qr_codes q
                 INNER JOIN " . _DB_PREFIX_ . "qsp_customer_codes cc ON cc.id_qr_code = q.id_qr_code
                 INNER JOIN " . _DB_PREFIX_ . "qsp_customer_contacts c ON c.id_customer_code = cc.id_customer_code
-                LEFT JOIN " . _DB_PREFIX_ . "country co ON c.contact_country_id = co.id_country
+                LEFT JOIN " . _DB_PREFIX_ . "country co ON c.contact_country_id_wp = co.id_country
                 WHERE q.code = '$qr_code' AND q.status = 'ACTIVO'
                 ORDER BY c.contact_index ASC
                 LIMIT 2
@@ -53,7 +53,7 @@ class QrsoldproductsLocationhookModuleFrontController extends ModuleFrontControl
             $enviados = 0;
             $exitosos = 0;
             foreach ($contacts as $contact) {
-                $phone = $contact['contact_phone_number'];
+                $phone = $contact['contact_phone_number_wp'];
                 $country_prefix = $contact['call_prefix'];
                 
                 if ($phone) {
