@@ -348,9 +348,8 @@ class AdminQrCodeManagerController extends ModuleAdminController
             throw new PrestaShopException('No se encontraron registros para exportar.');
         }
 
-        // URL pública de los PNG generados por el módulo: /modules/qrsoldproducts/qrs/{code}.png
-        $moduleBaseUri = $this->module->getPathUri(); // .../modules/qrsoldproducts/
-        $qrBaseUri = rtrim(Context::getContext()->shop->getBaseURL(true), '/') . rtrim($moduleBaseUri, '/').'/qrs/';
+        // Instancia del servicio para generar la URL compacta
+        $qrService = new QspQrCodeService();
 
         // Crear Excel
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
@@ -359,14 +358,14 @@ class AdminQrCodeManagerController extends ModuleAdminController
         // Encabezados
         $sheet->setCellValue('A1', 'Código QR');
         $sheet->setCellValue('B1', 'Código de validación');
-        $sheet->setCellValue('C1', 'URL del QR');
+        $sheet->setCellValue('C1', 'URL');
 
         // Filas
         $rowNum = 2;
         foreach ($rows as $r) {
             $code = (string)$r['code'];
             $validation = (string)$r['validation_code'];
-            $url = $qrBaseUri . $code . '.png';
+            $url = $qrService->buildCompactPayload($code);
 
             $sheet->setCellValue('A'.$rowNum, $code);
             $sheet->setCellValue('B'.$rowNum, $validation);

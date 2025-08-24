@@ -50,7 +50,7 @@ class QspQrCodeService
         return $created;
     }
 
-    private function buildCompactPayload(string $code): string
+    public function buildCompactPayload(string $code): string
     {
         $base = Context::getContext()->shop->getBaseURL(true);
         $base = preg_replace('#^https?://#i', '', $base);   
